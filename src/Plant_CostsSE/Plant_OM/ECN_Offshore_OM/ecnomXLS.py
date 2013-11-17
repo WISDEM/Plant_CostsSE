@@ -102,10 +102,6 @@ class ecnomXLS(object):
         """
         open the ECN O&M spreadsheet
         """
-        
-        #self.xlsfile = r'D:/SystemsEngr/OM/ECN/ECN_O&M_Tool_4-3-2_DemoK13.xls'
-        #self.xlsfile = r'ECN_O&M_Tool_4-3-2_DemoK13.xls'
-        self.xlsfile = r'ECN O&M Tool IO&M Baseline.xls' #TODO: machine dependency
 
         if (ssfile is not None):
             if (not os.path.isfile(ssfile)):

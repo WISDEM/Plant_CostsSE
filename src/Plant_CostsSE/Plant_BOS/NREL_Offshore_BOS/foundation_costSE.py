@@ -5,30 +5,21 @@ Created by NWTC Systems Engineering Sub-Task on 2012-08-01.
 Copyright (c) NREL. All rights reserved.
 """
 
-import sys
-
-from openmdao.main.api import Component, Assembly, set_as_top, VariableTree
-from openmdao.main.datatypes.api import Int, Bool, Float, Array, VarTree
-
-from twister.models.bos.foundation.foundation import foundation
+from openmdao.main.api import Component
+from openmdao.main.datatypes.api import Float
 
 class foundation_mc_component(Component):
     """
        Component to wrap python code for monopile foundation mass-cost model
     """
 
-    # ---- Design Variables -------------- 
-    
-    # Turbine Configuration
+    # variables
     ratedPower = Float(5000.0, units = 'kW', iotype='in', desc=' rated power of machine')
     monopileMass = Float(1678575.888, units='lb', iotype='in', desc = 'monopile total mass for primary steel')
     transitionMass = Float(913000.00, units='lb', iotype='in', desc = 'transition piece total mass')
-   
-    # Plant Configuration
     seaDepth = Float(0.0, units = 'm', iotype='in', desc = 'project site water depth')
 
-    # ------------- Outputs -------------- 
-  
+    # outputs
     foundationCost = Float(0.0, units='USD', iotype='out', desc='cost for a foundation')
 
     def __init__(self):
@@ -52,8 +43,6 @@ class foundation_mc_component(Component):
     		  cost for a foundation [USD]  
         """
         super(foundation_mc_component, self).__init__()
-        
-        self.foundation = foundation()
 
     def execute(self):
         """
@@ -61,10 +50,15 @@ class foundation_mc_component(Component):
         """
 
         print "In {0}.execute()...".format(self.__class__)
-        
-        self.foundation.compute(self.ratedPower, self.seaDepth, self.monopileMass, self.transitionMass)
 
-        self.foundationCost = self.foundation.getCost()
+        if self.ratedPower == 4.0:
+            secondaryMass = ((35 + (self.ratedPower/1000)*5) + 0.8*(18 + self.seaDepth))*1000
+        else:
+            secondaryMass = ((35) + 0.8*(18 + self.seaDepth))*1000         
+        secondaryCosts = secondaryMass * 7.250
+        monopileCosts = self.monopileMass * 2.250
+        transitionCosts = self.transitionMass * 2.750
+        self.foundationCost = monopileCosts + transitionCosts + secondaryCosts
            
 #-----------------------------------------------------------------
 

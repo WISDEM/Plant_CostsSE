@@ -21,8 +21,8 @@ Copyright (c) NREL. All rights reserved.
 
 
 import sys, os
-from twister.components.global_config import PlatformIsWindows
-from twister.models.xcel_wrapper import ExcelWrapper
+
+from Plant_CostsSE.xcel_wrapper import ExcelWrapper
 
 # shnums - sheet names and corresponding numbers in NREL BOS spreadsheet
 #   Most inputs will be on sheet 'Input' (1)
@@ -59,8 +59,6 @@ class bos_nrel_XLS(object):
         """
         open the NREL BOS spreadsheet
         """
-        
-        self.xlsfile = r'Offshore BOS model-Optimized IOM 12-11-29.xlsx'
         
         if (ssfile is not None):
             if (not os.path.isfile(ssfile)):
@@ -246,37 +244,32 @@ class bos_nrel_XLS(object):
 
 #--------------------------------------------------------------------------------------------
 
-def example():
+def example(ssfile=None):
 
-    bos = bos_nrel_XLS(debug=True)
-
-    import time
-    tt = time.time()
-
-    ssfile  = r'C:/Python27/openmdao-0.3.0/twister/models/BOS/Offshore BOS model-Optimized IOM 12-11-29.xlsx' 
-      # TODO: machine dependency
-
-    istat = bos.ssopen(ssfile=ssfile)  #TODO: this flag currently gets set to 0 though program still works...
-    #if (istat == 0):
-    #    exit()
-    
-    bos.printCosts()
-     
-    #bos.execute()
-    
-    bos.setCell(7,2,50) # change number of turbines
-    
-    bos.printCosts()
-    print
-     
-    print "Cost/kWH {:5.3f}".format(bos.getCell(3,2)) # get cost
-    
-    bos.ssclose()
-
-    print
-    
-    print "Elapsed time: {:.3f} seconds".format(time.time()-tt) 
+    if (ssfile is not None):
+		    bos = bos_nrel_XLS(debug=True)
+		
+		    import time
+		    tt = time.time()
+		
+		    istat = bos.ssopen(ssfile)  #TODO: this flag currently gets set to 0 though program still works...
+		    
+		    bos.printCosts()
+		    
+		    bos.setCell(7,2,50) # change number of turbines
+		    
+		    bos.printCosts()
+		    print
+		     
+		    print "Cost/kWH {:5.3f}".format(bos.getCell(3,2)) # get cost
+		    
+		    bos.ssclose()
+		
+		    print
+		    
+		    print "Elapsed time: {:.3f} seconds".format(time.time()-tt) 
 
 if __name__ == "__main__":
 
-    example()
+    ssfile  = 'C:/Python27/openmdao-0.3.0/twister/models/BOS/Offshore BOS model-Optimized IOM 12-11-29.xlsx'
+    example(ssfile)

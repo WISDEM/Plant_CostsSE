@@ -5,53 +5,58 @@ Created by NWTC Systems Engineering Sub-Task on 2012-08-01.
 Copyright (c) NREL. All rights reserved.
 """
 
-import sys
+from openmdao.main.api import Component, Assembly, VariableTree
+from openmdao.main.datatypes.api import Int, Bool, Float, Str, Array, VarTree
 
-from openmdao.main.api import Component
-from openmdao.lib.datatypes.api import Float, Int, VarTree, Str, Bool, Slot
+from fusedwind.plant_cost.fused_costs_asym import BOSVarTree, ExtendedBOSCostAggregator, ExtendedBOSCostModel
 
-from twister.fused_cost import GenericBOSCostModel
+from bos_nrel_XLS import bos_nrel_XLS
 
-from twister.components.varTrees import PlantBOS
+class bos_nrel_offshore_assembly(ExtendedBOSCostModel):
+    
+    def __init__(self, ssfile):
 
-from twister.models.BOS.bos_nrel_XLS import bos_nrel_XLS
-from twister.components.global_config import PlatformIsWindows
+        self.ssfile = ssfile
+    
+        super(bos_nrel_offshore_assembly, self).__init__()
 
-class bos_nrel_offshore_component(Component):
+    def configure(self):
+
+        super(bos_nrel_offshore_assembly, self).configure()
+    
+        self.replace('bos', bos_nrel_offshore_component(self.ssfile))
+
+        self.create_passthrough('bos.seaDepth')
+        self.create_passthrough('bos.bladeLength')
+        self.create_passthrough('bos.bladeWidth')
+        self.create_passthrough('bos.hubDiameter')
+        self.create_passthrough('bos.nacelleLength')
+        self.create_passthrough('bos.nacelleHeight')
+        self.create_passthrough('bos.nacelleWidth')
+        self.create_passthrough('bos.towerLength')
+        self.create_passthrough('bos.maxTowerDiameter')
+        self.create_passthrough('bos.distanceFromShore')
+        self.create_passthrough('bos.soilType')
+
+class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
     """ Evaluates the NREL BOS spreadsheet """
 
-    # ------------- Design Variables -----------------
-    
-    # Turbine Configuration
-    # rotor
-    ratedPower = Float(5000.0, units = 'kW', iotype='in', desc= 'rated machine power in kW')
-    rotorDiameter = Float(126.0, units = 'm', iotype='in', desc= 'rotor diameter of the machine')
+    # variables
     bladeLength = Float(61.5, units = 'm', iotype='in', desc= 'length of a wind turbine blade')
     bladeWidth = Float(2.3, units = 'm', iotype='in', desc= 'width of blade at max chord position')
     hubDiameter = Float(3.0, units = 'm', iotype='in', desc = 'diameter of the hub')
-    # drivetrain
     nacelleLength = Float(17.0, units = 'm', iotype='in', desc='length of the nacelle')
     nacelleHeight = Float(5.5, units = 'm', iotype = 'in', desc = 'height of the nacelle')
     nacelleWidth = Float(5.5, units = 'm', iotype = 'in', desc = 'width of the nacelle')
-    # tower
-    hubHeight = Float(90.0, units = 'm', iotype='in', desc = 'hub height for wind turbine')
     towerLength = Float(87.6, units = 'm', iotype = 'in', desc = 'length of tower')
     maxTowerDiameter = Float(6.0, units = 'm', iotype='in', desc = 'maximum diameter of the tower')
-    # RNA
-    RNAMass = Float(256634.5, units = 'kg', iotype='in', desc = 'mass of the rotor-nacelle assembly')
-    
-    # Plant Configuration
     seaDepth = Float(20.0, units = 'm', iotype='in', desc = 'sea depth for offshore wind project')
+
+    # parameters
     distanceFromShore = Float(30.0, units = 'km', iotype='in', desc = 'distance of plant from shore')
-    turbineNumber = Int(100, iotype='in', desc= 'number of turbines in plant')
     soilType = Str("Sand", iotype='in', desc = 'soil type at plant site')    
 
-    # ------- Outputs ------------------  
-    # while framework not working
-    bos_cost = Float(0.0, iotype='out', units='USD', desc='Balance of station costs')       
-    plantBOS = Slot(PlantBOS, iotype='out')
-
-    def __init__(self):
+    def __init__(self, ssfile):
         """
         OpenMDAO component to wrap NREL Offshore BOS Excel Model (bos_nrel_XLS.py)
         
@@ -100,18 +105,11 @@ class bos_nrel_offshore_component(Component):
         """
         
         super(bos_nrel_offshore_component, self).__init__()
-        
-        # initialize output variable tree
-        self.add('plantBOS',PlantBOS())
 
         #open excel account
         self.bosnrelxls = bos_nrel_XLS(debug=False)
-        if (PlatformIsWindows()):
-            self.ssfile = 'C:/Python27/openmdao-0.7.0/twister/models/BOS/Offshore BOS Model.xlsx' # TODO: machine independence
-        else:
-            self.ssfile = "/Users/pgraf/work/wese/wese-6_13_12/twister/examples/excel_wrapper/bosMod.xlsx"
-        self.bosnrelxls.ssopen(ssfile=self.ssfile)
-
+        print ssfile
+        self.bosnrelxls.ssopen(ssfile)
         
     def execute(self):
         """
@@ -120,19 +118,13 @@ class bos_nrel_offshore_component(Component):
         print "In {0}.execute()...".format(self.__class__)
 
         # set input cells from user inputs and parameter scans
-        self.bosnrelxls.setCell( 6,2,self.ratedPower*0.001) # spreadsheet uses MW        
-        self.bosnrelxls.setCell( 7,2,self.turbineNumber)
+        self.bosnrelxls.setCell( 6,2,self.machine_rating*0.001) # spreadsheet uses MW        
+        self.bosnrelxls.setCell( 7,2,self.turbine_number)
         self.bosnrelxls.setCell( 8,2,self.seaDepth)
         self.bosnrelxls.setCell( 9,2,self.distanceFromShore)
         self.bosnrelxls.setCell(10,2,self.soilType)        
-        self.bosnrelxls.setCell(11,2,self.rotorDiameter)
-        self.bosnrelxls.setCell(12,2,self.hubHeight)
-
-
-        #print [self.nacelleLength, self.nacelleHeight, self.nacelleWidth]
-        #print [self.hubDiameter, self.bladeLength, self.bladeWidth]
-        #print [self.towerLength, self.maxTowerDiameter]
-        #print [self.RNAMass / 1000.0]
+        self.bosnrelxls.setCell(11,2,self.rotor_diameter)
+        self.bosnrelxls.setCell(12,2,self.hub_height)
 
         # set input cells from other assemblies          
         self.bosnrelxls.setCell(23,2,self.nacelleLength)
@@ -143,49 +135,46 @@ class bos_nrel_offshore_component(Component):
         self.bosnrelxls.setCell(23,8,self.bladeWidth)
         self.bosnrelxls.setCell(23,9,self.towerLength)
         self.bosnrelxls.setCell(23,10,self.maxTowerDiameter)
-        self.bosnrelxls.setCell(23,14,self.RNAMass / 1000.0) # input to spreadsheet is in tons
+        self.bosnrelxls.setCell(23,14,self.RNA_mass / 1000.0) # input to spreadsheet is in tons
         
         # compute!!
-        
-        self.bos_cost      = self.bosnrelxls.getCell(3,2) * 1e6
 
-        self.plantBOS.totalBOSCost = self.bos_cost
-        self.plantBOS.foundationCost = self.bosnrelxls.getCell(10,2) * 1e3
-        self.plantBOS.engineeringCost   = self.bosnrelxls.getCell(7,2) * 1e3
-        self.plantBOS.permittingCost    = self.bosnrelxls.getCell(8,2) * 1e3
-        self.plantBOS.developmentCost   = self.plantBOS.engineeringCost + self.plantBOS.permittingCost
+        self.bos_costs      = self.bosnrelxls.getCell(3,2) * 1e6
 
-        self.plantBOS.portsStagingCost    = self.bosnrelxls.getCell(9,2) * 1e3
-        self.plantBOS.vesselsCost         = self.bosnrelxls.getCell(12,2) * 1e3
-        self.plantBOS.assemblyInstallCost = self.plantBOS.vesselsCost
-
-        self.plantBOS.electricalInterconnectCost = self.bosnrelxls.getCell(11,2) * 1e3
-
-        self.plantBOS.offshoreDecommissioningCost = self.bosnrelxls.getCell(13,2) * 1e3
-        self.plantBOS.offshoreAdditionalCost        = self.bosnrelxls.getCell(14,2) * 1e3
-        self.plantBOS.offshoreInsuranceCost       = self.bosnrelxls.getCell(18,2) * 1e3
-        self.plantBOS.offshoreContingenciesCost   = self.bosnrelxls.getCell(19,2) * 1e3
+        self.BOS_breakdown.management_costs = 0.0
+        self.BOS_breakdown.development_costs = self.bosnrelxls.getCell(7,2) * 1e3 + self.bosnrelxls.getCell(8,2) * 1e3
+        self.BOS_breakdown.preparation_and_staging_costs = self.bosnrelxls.getCell(9,2) * 1e3 
+        self.BOS_breakdown.transportation_costs = 0.0
+        self.BOS_breakdown.foundation_and_substructure_costs = self.bosnrelxls.getCell(10,2) * 1e3
+        self.BOS_breakdown.collection_and_substation_costs = 0.0 # TODO: double check ability to split out from interconnect costs
+        self.BOS_breakdown.transmission_and_interconnection_costs = self.bosnrelxls.getCell(11,2) * 1e3
+        self.BOS_breakdown.assembly_and_installation_costs = self.bosnrelxls.getCell(12,2) * 1e3 #TODO: vessels?
+        self.BOS_breakdown.contingencies_and_insurance_costs = self.bosnrelxls.getCell(18,2) * 1e3 + self.bosnrelxls.getCell(19,2) * 1e3
+        self.BOS_breakdown.decommissioning_costs = self.bosnrelxls.getCell(13,2) * 1e3
+        self.BOS_breakdown.construction_financing_costs = 0.0
+        self.BOS_breakdown.other_costs = self.bosnrelxls.getCell(14,2) * 1e3
+        self.BOS_breakdown.developer_profits = 0.0
         
 #----------------------------
 
-def example():
-  
-    #TODO: adjust program main routines to be machine independent
+def example(ssfile):  
 
-    import time
-    tt = time.time()    
+    bos = bos_nrel_offshore_assembly(ssfile)
+    bos.machine_rating = 5000.0
+    bos.rotor_diameter = 126.0
+    bos.turbine_cost = 5950209.283
+    bos.turbine_number = 100
+    bos.hub_height = 90.0
+    bos.RNA_mass = 256634.5 # RNA mass is not used in this simple model
 
-    opt_problem = bos_nrel_offshore_component()
-    opt_problem.execute()
+    bos.execute()
 
-    print "\n"
-    print "Cost {:.3f} found at ({:.2f}) turbines".format(opt_problem.bos_cost, opt_problem.turbineNumber)
-    print "plant BOS variable tree"
-    opt_problem.plantBOS.printVT()
+    print "Cost {:.3f} found at ({:.2f}) turbines".format(bos.bos_costs, bos.turbine_number)
 
-    opt_problem.bosnrelxls.ssclose()  
+    bos.bos.bosnrelxls.ssclose()  
 
 if __name__ == "__main__": # pragma: no cover    
 
+    ssfile = 'C:/Models/BOS/Offshore BOS Model.xlsx'
     
-    example()
+    example(ssfile)
