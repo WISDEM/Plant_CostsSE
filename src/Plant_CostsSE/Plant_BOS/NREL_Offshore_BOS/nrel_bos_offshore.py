@@ -159,6 +159,8 @@ class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
 
 def example(ssfile):  
 
+
+
     bos = bos_nrel_offshore_assembly(ssfile)
     bos.machine_rating = 5000.0
     bos.rotor_diameter = 126.0
@@ -173,7 +175,7 @@ def example(ssfile):
 
     bos.bos.bosnrelxls.ssclose()  
 
-if __name__ == "__main__": # pragma: no cover    
+if __name__ == "__main__": # pragma: no cover 
 
     ssfile = 'C:/Models/BOS/Offshore BOS Model.xlsx'
     

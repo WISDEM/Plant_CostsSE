@@ -6,8 +6,8 @@
 
 from setuptools import setup, find_packages
 
-kwargs = {'author': '',
- 'author_email': '',
+kwargs = {'author': 'Katherine Dykes and George Scott',
+ 'author_email': 'systems.engineering@nrel.gov',
  'classifiers': ['Intended Audience :: Science/Research',
                  'Topic :: Scientific/Engineering'],
  'description': '',
@@ -15,13 +15,14 @@ kwargs = {'author': '',
  'include_package_data': True,
  'install_requires': ['openmdao.main'],
  'keywords': ['openmdao'],
- 'license': '',
- 'maintainer': '',
- 'maintainer_email': '',
+ 'license': 'Apache v. 2.0',
+ #'maintainer': '',
+ #'maintainer_email': '',
  'name': 'Plant_CostsSE',
  'package_data': {'Plant_CostsSE': []},
  'package_dir': {'': 'src'},
- 'packages': ['Plant_CostsSE'],
+ 'packages': ['Plant_CostsSE', 'Plant_CostsSE.Plant_BOS.NREL_CSM_BOS', 'Plant_CostsSE.Plant_BOS.NREL_Offshore_BOS', 'Plant_CostsSE.Plant_BOS.NREL_Onshore_BOS', \
+ 	            'Plant_CostsSE.test', 'Plant_CostsSE.Plant_OM.NREL_CSM_OM', 'Plant_CostsSE.Plant_OM.ECN_Offshore_OM', 'Plant_CostsSE.Plant_OM.GEC_Onshore_OM'],
  'url': '',
  'version': '0.1',
  'zip_safe': False}

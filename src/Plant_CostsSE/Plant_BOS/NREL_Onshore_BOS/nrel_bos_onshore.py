@@ -331,8 +331,7 @@ class bos_nrel_onshore_component(ExtendedBOSCostAggregator):
  
         self.derivatives.set_first_derivative(input_keys, output_keys, self.J)   
 
-
-if __name__ == "__main__":
+def example():
 
     bos = bos_nrel_onshore_assembly()
     bos.machine_rating = 5000.0
@@ -347,3 +346,7 @@ if __name__ == "__main__":
     print "Cost {:.3f} found at ({:.2f}) turbines".format(bos.bos_costs, bos.turbine_number)
     
     #TODO: examples and main
+
+if __name__ == "__main__":
+
+    example()

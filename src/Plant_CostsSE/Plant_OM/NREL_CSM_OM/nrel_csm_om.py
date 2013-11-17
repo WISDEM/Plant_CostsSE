@@ -8,7 +8,7 @@ Copyright (c) NREL. All rights reserved.
 from openmdao.main.api import Component, Assembly, set_as_top, VariableTree
 from openmdao.main.datatypes.api import Int, Bool, Float, Array, VarTree
 
-from fusedwind.plant_cost.fused_costs_asym import ExtendedOPEXAggregator, ExtendedOPEXModel
+from fusedwind.plant_cost.fused_costs_asym import OPEXVarTree, ExtendedOPEXAggregator, ExtendedOPEXModel
 
 from NREL_CSM.csmOM import csmOM
 
@@ -91,6 +91,8 @@ def example():
     # simple test of module
 
     om = om_csm_assembly()
+    
+    om.machine_rating = 5000.0 # Need to manipulate input or underlying component will not execute
 
     om.execute()
     print "OM onshore {:.1f}".format(om.avg_annual_opex)
