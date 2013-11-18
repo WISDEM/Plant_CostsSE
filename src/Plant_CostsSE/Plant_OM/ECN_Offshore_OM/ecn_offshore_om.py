@@ -64,7 +64,7 @@ class om_ecn_offshore_component(ExtendedOPEXAggregator):
           rated power for a wind turbine [kW]
         turbine_number : int
           number of turbines at plant
-        projectLifetime : float
+        project_lifetime : float
           project liftime for wind plant
         
         Returns

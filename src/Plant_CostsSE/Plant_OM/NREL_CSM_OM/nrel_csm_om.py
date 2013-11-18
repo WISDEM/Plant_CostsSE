@@ -41,7 +41,7 @@ class om_csm_component(ExtendedOPEXAggregator):
  
     def __init__(self):
         """
-        OpenMDAO component to wrap O&M model of the NREL Cost and Scaling model data (csmOM.py).
+        OpenMDAO component to wrap O&M model of the NREL _cost and Scaling model data (csmOM.py).
 
         Parameters
         ----------
@@ -69,7 +69,7 @@ class om_csm_component(ExtendedOPEXAggregator):
 
     def execute(self):
         """
-        Execute the O&M Model of the NREL Cost and Scaling Model.
+        Execute the O&M Model of the NREL _cost and Scaling Model.
         """
         print "In {0}.execute()...".format(self.__class__)
         

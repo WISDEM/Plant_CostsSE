@@ -21,67 +21,67 @@ class bos_csm_assembly(ExtendedBOSCostModel):
     
         self.replace('bos', bos_csm_component())
 
-        self.create_passthrough('bos.seaDepth')
+        self.create_passthrough('bos.sea_depth')
         self.create_passthrough('bos.year')
         self.create_passthrough('bos.month')
 
 class bos_csm_component(ExtendedBOSCostAggregator):
 
     # parameters
-    seaDepth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
+    sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
     year = Int(2009, units='yr', iotype='in', desc='year for project start')
     month = Int(12,  units='mon', iotype = 'in', desc= 'month for project start')
 
     def __init__(self):
         """
-        OpenMDAO component to wrap BOS model of the NREL Cost and Scaling Model (csmBOS.py)
+        OpenMDAO component to wrap BOS model of the NREL _cost and Scaling Model (csmBOS.py)
         
         Parameters
         ----------
-        rotorDiameter : float
+        rotor_diameter : float
           rotor diameter of the machine [m]
-        ratedPower : float
+        machine_rating : float
           rated power for a wind turbine [kW]
-        hubHeight : float
+        hub_height : float
           hub height for wind turbine [m]
-        seaDepth : float
+        sea_depth : float
           sea depth for offshore wind plant [m]
-        turbineCost : float
+        turbine_cost : float
           Turbine capital costs per turbine [USD]
         year : int
           year of project start
         month : int
           month of project start
-        turbineNumber : int
+        turbine_number : int
           number of turbines at plant
           
         Returns
         -------
-        BOSCost : float
+        BOS_cost : float
           Balance of station total costs excluding foundation
         plantBOS : PlantBOS
-          Variable tree container for detailed BOS cost breakdown based on NREL Offshore Cost Breakdown Structure
+          Variable tree container for detailed BOS cost breakdown based on NREL Offshore _cost Breakdown Structure
         
         """
         super(bos_csm_component, self).__init__()
 
     def execute(self):
         """
-        Executes BOS model of the NREL Cost and Scaling Model to estimate wind plant BOS costs.
+        Executes BOS model of the NREL _cost and Scaling Model to estimate wind plant BOS costs.
         """
 
         print "In {0}.execute()...".format(self.__class__)
 
         self.csmBOS = csmBOS()
-        self.csmBOS.compute(self.seaDepth,self.machine_rating,self.hub_height,self.rotor_diameter, self.turbine_cost, self.year, self.month)
+        self.csmBOS.compute(self.sea_depth,self.machine_rating,self.hub_height,self.rotor_diameter, self.turbine_cost, self.year, self.month)
 
         self.bos_costs = self.csmBOS.getCost() * self.turbine_number
 
-        [foundation, landTransportation, landCivil, portsStaging, installation, electricalInterconnect, developmentCost, \
+        [foundation, landTransportation, landCivil, portsStaging, installation, electricalInterconnect, development_cost, \
          accessEquipment, scour, additional] = self.csmBOS.getDetailedCosts()
          
         self.BOS_breakdown.management_costs = 0.0
-        self.BOS_breakdown.development_costs = developmentCost * self.turbine_number
+        self.BOS_breakdown.development_costs = development_cost * self.turbine_number
         self.BOS_breakdown.preparation_and_staging_costs = (landCivil + portsStaging) * self.turbine_number
         self.BOS_breakdown.transportation_costs = (landTransportation * self.turbine_number)
         self.BOS_breakdown.foundation_and_substructure_costs = foundation * self.turbine_number
@@ -100,9 +100,9 @@ class foundation_csm_component(Component):
     """
 
     # variables
-    rotorDiameter = Float(126.0, units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
-    hubHeight = Float(90.0, units = 'm', iotype='in', desc = 'hub height of machine')
-    ratedPower = Float(5000.0, units = 'kW', iotype='in', desc=' rated power of machine')
+    rotor_diameter = Float(126.0, units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
+    hub_height = Float(90.0, units = 'm', iotype='in', desc = 'hub height of machine')
+    machine_rating = Float(5000.0, units = 'kW', iotype='in', desc=' rated power of machine')
     sea_depth = Float(0.0, units = 'm', iotype='in', desc = 'project site water depth')
     
     # parameters
@@ -110,44 +110,44 @@ class foundation_csm_component(Component):
     month = Int(12, units = 'mon', iotype='in', desc = 'month of project start')
   
     # outputs
-    foundationCost = Float(0.0, units='USD', iotype='out', desc='cost for a foundation')
+    foundation_cost = Float(0.0, units='USD', iotype='out', desc='cost for a foundation')
 
     def __init__(self):
         """
-        OpenMDAO component to wrap foundation model of the NREL Cost and Scaling Model (csmFoundation.py)
+        OpenMDAO component to wrap foundation model of the NREL _cost and Scaling Model (csmFoundation.py)
 
         Parameters
         ---------- 
-		    rotorDiameter : float
+		    rotor_diameter : float
 		      rotor diameter of the machine [m]
-		    hubHeight : float
+		    hub_height : float
 		      hub height of machine [m]
-		    ratedPower : float
+		    machine_rating : float
 		      rated power of machine [kW]
 		    year : int
 		      year of project start
 		    month : int
 		      month of project start
-		    seaDepth : float
+		    sea_depth : float
 		      project site water depth [m]
 		      
 		    Returns
 		    -------
-    		foundationCost : float
+    		foundation_cost : float
     		  cost for a foundation [USD]	    
         """
 
     def execute(self):
         """
-        Executes foundation model of the NREL Cost and Scaling model to determine foundation costs for a land-based or offshore plant.
+        Executes foundation model of the NREL _cost and Scaling model to determine foundation costs for a land-based or offshore plant.
         """
 
         print "In {0}.execute()...".format(self.__class__)
 
         self.foundation = csmFoundation()        
-        self.foundation.compute(self.ratedPower, self.hubHeight, self.rotorDiameter, self.seaDepth, self.year, self.month)
+        self.foundation.compute(self.machine_rating, self.hub_height, self.rotor_diameter, self.sea_depth, self.year, self.month)
 
-        self.foundationCost = self.foundation.getCost()    
+        self.foundation_cost = self.foundation.getCost()    
 #-----------------------------------------------------------------
 
 def example_fdn():
@@ -157,25 +157,25 @@ def example_fdn():
     fdn = foundation_csm_component()
         
     # First test
-    fdn.ratedPower = 5000.0
-    fdn.rotorDiameter = 126.0
-    fdn.hubHeight = 90.0
-    fdn.seaDepth = 0.0
+    fdn.machine_rating = 5000.0
+    fdn.rotor_diameter = 126.0
+    fdn.hub_height = 90.0
+    fdn.sea_depth = 0.0
     fdn.year = 2009
     fdn.month = 12
     
     fdn.execute()
 
     print "Onshore foundation"
-    print "Foundation cost: {0}".format(fdn.foundationCost)
+    print "Foundation cost: {0}".format(fdn.foundation_cost)
     print
     
-    fdn.seaDepth = 20.0
+    fdn.sea_depth = 20.0
     
     fdn.execute()
 
     print "Offshore foundation"    
-    print "Foundation cost: {0}".format(fdn.foundationCost)
+    print "Foundation cost: {0}".format(fdn.foundation_cost)
 
 
 def example():
@@ -193,7 +193,7 @@ def example():
     print "BOS cost per turbine: {0}".format(bos.bos_costs / bos.turbine_number)
     print
     
-    bos.seaDepth = 0.0
+    bos.sea_depth = 0.0
     bos.turbine_cost = 5229222.77
     bos.execute()
     print "BOS cost onshore: {0}".format(bos.bos_costs)

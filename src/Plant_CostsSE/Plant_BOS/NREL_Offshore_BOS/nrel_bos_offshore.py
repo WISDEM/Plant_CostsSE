@@ -26,35 +26,35 @@ class bos_nrel_offshore_assembly(ExtendedBOSCostModel):
     
         self.replace('bos', bos_nrel_offshore_component(self.ssfile))
 
-        self.create_passthrough('bos.seaDepth')
-        self.create_passthrough('bos.bladeLength')
-        self.create_passthrough('bos.bladeWidth')
-        self.create_passthrough('bos.hubDiameter')
-        self.create_passthrough('bos.nacelleLength')
-        self.create_passthrough('bos.nacelleHeight')
-        self.create_passthrough('bos.nacelleWidth')
-        self.create_passthrough('bos.towerLength')
-        self.create_passthrough('bos.maxTowerDiameter')
-        self.create_passthrough('bos.distanceFromShore')
-        self.create_passthrough('bos.soilType')
+        self.create_passthrough('bos.sea_depth')
+        self.create_passthrough('bos.blade_length')
+        self.create_passthrough('bos.blade_width')
+        self.create_passthrough('bos.hub_diameter')
+        self.create_passthrough('bos.nacelle_length')
+        self.create_passthrough('bos.nacelle_height')
+        self.create_passthrough('bos.nacelle_width')
+        self.create_passthrough('bos.tower_length')
+        self.create_passthrough('bos.max_tower_diameter')
+        self.create_passthrough('bos.distance_from_shore')
+        self.create_passthrough('bos.soil_type')
 
 class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
     """ Evaluates the NREL BOS spreadsheet """
 
     # variables
-    bladeLength = Float(61.5, units = 'm', iotype='in', desc= 'length of a wind turbine blade')
-    bladeWidth = Float(2.3, units = 'm', iotype='in', desc= 'width of blade at max chord position')
-    hubDiameter = Float(3.0, units = 'm', iotype='in', desc = 'diameter of the hub')
-    nacelleLength = Float(17.0, units = 'm', iotype='in', desc='length of the nacelle')
-    nacelleHeight = Float(5.5, units = 'm', iotype = 'in', desc = 'height of the nacelle')
-    nacelleWidth = Float(5.5, units = 'm', iotype = 'in', desc = 'width of the nacelle')
-    towerLength = Float(87.6, units = 'm', iotype = 'in', desc = 'length of tower')
-    maxTowerDiameter = Float(6.0, units = 'm', iotype='in', desc = 'maximum diameter of the tower')
-    seaDepth = Float(20.0, units = 'm', iotype='in', desc = 'sea depth for offshore wind project')
+    blade_length = Float(61.5, units = 'm', iotype='in', desc= 'length of a wind turbine blade')
+    blade_width = Float(2.3, units = 'm', iotype='in', desc= 'width of blade at max chord position')
+    hub_diameter = Float(3.0, units = 'm', iotype='in', desc = 'diameter of the hub')
+    nacelle_length = Float(17.0, units = 'm', iotype='in', desc='length of the nacelle')
+    nacelle_height = Float(5.5, units = 'm', iotype = 'in', desc = 'height of the nacelle')
+    nacelle_width = Float(5.5, units = 'm', iotype = 'in', desc = 'width of the nacelle')
+    tower_length = Float(87.6, units = 'm', iotype = 'in', desc = 'length of tower')
+    max_tower_diameter = Float(6.0, units = 'm', iotype='in', desc = 'maximum diameter of the tower')
+    sea_depth = Float(20.0, units = 'm', iotype='in', desc = 'sea depth for offshore wind project')
 
     # parameters
-    distanceFromShore = Float(30.0, units = 'km', iotype='in', desc = 'distance of plant from shore')
-    soilType = Str("Sand", iotype='in', desc = 'soil type at plant site')    
+    distance_from_shore = Float(30.0, units = 'km', iotype='in', desc = 'distance of plant from shore')
+    soil_type = Str("Sand", iotype='in', desc = 'soil type at plant site')    
 
     def __init__(self, ssfile):
         """
@@ -66,33 +66,33 @@ class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
           rated power for a wind turbine [kW]
         rotorDiameter : float
           rotor diameter of the machine [m]
-        bladeLength : float
+        blade_length : float
           length of a wind turbine blade [m]
-        bladeWidth : float
+        blade_width : float
           width of blade at max chord position [m]
-        hubDiameter : float
+        hub_diameter : float
           diameter of the hub [m]
-        nacelleLength : float
+        nacelle_length : float
           length of the nacelle [m]
-        nacelleHeight : float
+        nacelle_height : float
           height of the nacelle [m]
-        nacelleWidth : float
+        nacelle_width : float
           width of the nacelle [m]
         hubHeight : float
           hub height for wind turbine [m]
-        towerLength : float
+        tower_length : float
           length of tower [m]
-        maxTowerDiameter : float
+        max_tower_diameter : float
           maximum diameter of the tower [m]
         RNAMass : float
           mass of the rotor-nacelle assembly [kg]
-        seaDepth : float
+        sea_depth : float
           sea depth for offshore wind project [m]
-        distanceFromShore : float
+        distance_from_shore : float
           distance of plant from shore [m]
         turbineNumber : int
           number of turbines in plant
-        soilType : str
+        soil_type : str
           soil type at plant site - Sand only option at present
           
         Returns
@@ -120,21 +120,21 @@ class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
         # set input cells from user inputs and parameter scans
         self.bosnrelxls.setCell( 6,2,self.machine_rating*0.001) # spreadsheet uses MW        
         self.bosnrelxls.setCell( 7,2,self.turbine_number)
-        self.bosnrelxls.setCell( 8,2,self.seaDepth)
-        self.bosnrelxls.setCell( 9,2,self.distanceFromShore)
-        self.bosnrelxls.setCell(10,2,self.soilType)        
+        self.bosnrelxls.setCell( 8,2,self.sea_depth)
+        self.bosnrelxls.setCell( 9,2,self.distance_from_shore)
+        self.bosnrelxls.setCell(10,2,self.soil_type)        
         self.bosnrelxls.setCell(11,2,self.rotor_diameter)
         self.bosnrelxls.setCell(12,2,self.hub_height)
 
         # set input cells from other assemblies          
-        self.bosnrelxls.setCell(23,2,self.nacelleLength)
-        self.bosnrelxls.setCell(23,3,self.nacelleHeight) 
-        self.bosnrelxls.setCell(23,4,self.nacelleWidth)
-        self.bosnrelxls.setCell(23,5,self.hubDiameter)
-        self.bosnrelxls.setCell(23,7,self.bladeLength)
-        self.bosnrelxls.setCell(23,8,self.bladeWidth)
-        self.bosnrelxls.setCell(23,9,self.towerLength)
-        self.bosnrelxls.setCell(23,10,self.maxTowerDiameter)
+        self.bosnrelxls.setCell(23,2,self.nacelle_length)
+        self.bosnrelxls.setCell(23,3,self.nacelle_height) 
+        self.bosnrelxls.setCell(23,4,self.nacelle_width)
+        self.bosnrelxls.setCell(23,5,self.hub_diameter)
+        self.bosnrelxls.setCell(23,7,self.blade_length)
+        self.bosnrelxls.setCell(23,8,self.blade_width)
+        self.bosnrelxls.setCell(23,9,self.tower_length)
+        self.bosnrelxls.setCell(23,10,self.max_tower_diameter)
         self.bosnrelxls.setCell(23,14,self.RNA_mass / 1000.0) # input to spreadsheet is in tons
         
         # compute!!
@@ -158,8 +158,6 @@ class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
 #----------------------------
 
 def example(ssfile):  
-
-
 
     bos = bos_nrel_offshore_assembly(ssfile)
     bos.machine_rating = 5000.0
