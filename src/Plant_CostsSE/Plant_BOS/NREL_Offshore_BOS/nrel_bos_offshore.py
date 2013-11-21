@@ -141,19 +141,15 @@ class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
 
         self.bos_costs      = self.bosnrelxls.getCell(3,2) * 1e6
 
-        self.BOS_breakdown.management_costs = 0.0
         self.BOS_breakdown.development_costs = self.bosnrelxls.getCell(7,2) * 1e3 + self.bosnrelxls.getCell(8,2) * 1e3
         self.BOS_breakdown.preparation_and_staging_costs = self.bosnrelxls.getCell(9,2) * 1e3 
         self.BOS_breakdown.transportation_costs = 0.0
         self.BOS_breakdown.foundation_and_substructure_costs = self.bosnrelxls.getCell(10,2) * 1e3
-        self.BOS_breakdown.collection_and_substation_costs = 0.0 # TODO: double check ability to split out from interconnect costs
-        self.BOS_breakdown.transmission_and_interconnection_costs = self.bosnrelxls.getCell(11,2) * 1e3
+        self.BOS_breakdown.electrical_costs = self.bosnrelxls.getCell(11,2) * 1e3
         self.BOS_breakdown.assembly_and_installation_costs = self.bosnrelxls.getCell(12,2) * 1e3 #TODO: vessels?
-        self.BOS_breakdown.contingencies_and_insurance_costs = self.bosnrelxls.getCell(18,2) * 1e3 + self.bosnrelxls.getCell(19,2) * 1e3
-        self.BOS_breakdown.decommissioning_costs = self.bosnrelxls.getCell(13,2) * 1e3
-        self.BOS_breakdown.construction_financing_costs = 0.0
-        self.BOS_breakdown.other_costs = self.bosnrelxls.getCell(14,2) * 1e3
-        self.BOS_breakdown.developer_profits = 0.0
+        self.BOS_breakdown.soft_costs = self.bosnrelxls.getCell(18,2) * 1e3 + self.bosnrelxls.getCell(19,2) * 1e3 + \
+                                        self.bosnrelxls.getCell(13,2) * 1e3 + self.bosnrelxls.getCell(14,2) * 1e3
+        self.BOS_breakdown.other_costs = 0.0
         
 #----------------------------
 

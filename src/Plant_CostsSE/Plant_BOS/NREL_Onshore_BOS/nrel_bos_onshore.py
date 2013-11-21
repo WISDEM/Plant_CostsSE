@@ -246,12 +246,12 @@ class bos_nrel_onshore_component(ExtendedBOSCostAggregator):
 
         # ----- collector substation costs -----
         collectorCost = 11652*(interconnectVoltage + totalMW) + 11795*totalMW**0.3549 + 1234300
-        self.BOS_breakdown.collection_and_substation_costs = collectorCost
+        self.BOS_breakdown.electrical_costs = collectorCost
 
         # ---- transmission line and interconnection cost -----
         transmissionCost = (1176*interconnectVoltage + 218257)*distanceToInterconnect**0.8937 \
             + 18115*interconnectVoltage + 165944
-        self.BOS_breakdown.transmission_and_interconnection_costs = transmissionCost
+        self.BOS_breakdown.electrical_costs += transmissionCost
 
 
         # --- project management ----
@@ -259,7 +259,7 @@ class bos_nrel_onshore_component(ExtendedBOSCostAggregator):
             projMgtCost = (53.333*constructionTime**2 - 3442*constructionTime + 209542)*(constructionTime+2)
         else:
             projMgtCost = (constructionTime+2)*155000
-        self.BOS_breakdown.management_costs = projMgtCost
+        self.BOS_breakdown.development_costs += projMgtCost
 
         # --- markup and contingency costs ----
         alpha_contingency = (contingency + warrantyManagement + salesAndUseTax + overhead + profitMargin)/100
@@ -278,7 +278,7 @@ class bos_nrel_onshore_component(ExtendedBOSCostAggregator):
         alpha_insurance = (3.5 + 0.7 + 0.4 + 1.0)/1000.0
         if performanceBond:
             alpha_insurance += 10.0/1000
-        self.BOS_breakdown.contingencies_and_insurance_costs = alpha_contingency + alpha_insurance
+        self.BOS_breakdown.soft_costs = alpha_contingency + alpha_insurance
 
         # ---- development cost ------
         developmentCost = developmentFee * 1e6
@@ -299,11 +299,6 @@ class bos_nrel_onshore_component(ExtendedBOSCostAggregator):
         # # if needed
         # contingencyCost = alpha_contingency*BOS
         # insuranceCost += alpha_insurance*BOS
-
-        # return BOS
-        self.BOS_breakdown.construction_financing_costs = 0.0
-        self.BOS_breakdown.other_costs = 0.0
-        self.BOS_breakdown.developer_profits = 0.0 #TODO: double check this
 
         # derivatives
         d_diameter = rating*towerTopMass/1000.0 * nTurb * (1 + 0.02)

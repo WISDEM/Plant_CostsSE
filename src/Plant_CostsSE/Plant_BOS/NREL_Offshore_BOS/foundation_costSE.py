@@ -20,7 +20,7 @@ class foundation_mc_component(Component):
     seaDepth = Float(0.0, units = 'm', iotype='in', desc = 'project site water depth')
 
     # outputs
-    foundationCost = Float(0.0, units='USD', iotype='out', desc='cost for a foundation')
+    foundation_cost = Float(0.0, units='USD', iotype='out', desc='cost for a foundation')
 
     def __init__(self):
         """
@@ -39,7 +39,7 @@ class foundation_mc_component(Component):
 		      
 		    Returns
 		    -------
-    		foundationCost : float
+    		foundation_cost : float
     		  cost for a foundation [USD]  
         """
         super(foundation_mc_component, self).__init__()
@@ -58,7 +58,7 @@ class foundation_mc_component(Component):
         secondaryCosts = secondaryMass * 7.250
         monopileCosts = self.monopileMass * 2.250
         transitionCosts = self.transitionMass * 2.750
-        self.foundationCost = monopileCosts + transitionCosts + secondaryCosts
+        self.foundation_cost = monopileCosts + transitionCosts + secondaryCosts
            
 #-----------------------------------------------------------------
 
@@ -76,7 +76,7 @@ def example():
     
     fdn.execute()
 
-    print "Foundation cost: {0}".format(fdn.foundationCost)
+    print "Foundation cost: {0}".format(fdn.foundation_cost)
 
 if __name__ == "__main__":
 

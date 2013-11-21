@@ -48,7 +48,7 @@ class bos_nrel_offshore_assembly(ExtendedBOSCostModel):
         self.create_passthrough('foundation.transitionMass')
         self.connect('machine_rating', 'foundation.ratedPower')
         
-        self.connect('foundation.foundationCost', 'bos.foundationCost')
+        self.connect('foundation.foundation_cost', 'bos.foundation_cost')
 
 class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
     """ Evaluates the NREL BOS spreadsheet """
@@ -63,7 +63,7 @@ class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
     towerLength = Float(87.6, units = 'm', iotype = 'in', desc = 'length of tower')
     maxTowerDiameter = Float(6.0, units = 'm', iotype='in', desc = 'maximum diameter of the tower')
     seaDepth = Float(20.0, units = 'm', iotype='in', desc = 'sea depth for offshore wind project')
-    foundationCost = Float(0.0, units='USD', iotype='in', desc='cost for a foundation')
+    foundation_cost = Float(0.0, units='USD', iotype='in', desc='cost for a foundation')
 
     # parameters
     distanceFromShore = Float(30.0, units = 'km', iotype='in', desc = 'distance of plant from shore')
@@ -152,21 +152,17 @@ class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
         
         # compute!!
 
-        self.bos_costs      = self.bosnrelxls.getCell(3,2) * 1e6 - self.bosnrelxls.getCell(10,2) * 1e3 + self.foundationCost * self.turbine_number
+        self.bos_costs      = self.bosnrelxls.getCell(3,2) * 1e6 - self.bosnrelxls.getCell(10,2) * 1e3 + self.foundation_cost * self.turbine_number
 
-        self.BOS_breakdown.management_costs = 0.0
         self.BOS_breakdown.development_costs = self.bosnrelxls.getCell(7,2) * 1e3 + self.bosnrelxls.getCell(8,2) * 1e3
         self.BOS_breakdown.preparation_and_staging_costs = self.bosnrelxls.getCell(9,2) * 1e3 
         self.BOS_breakdown.transportation_costs = 0.0
-        self.BOS_breakdown.foundation_and_substructure_costs = self.foundationCost
-        self.BOS_breakdown.collection_and_substation_costs = 0.0 # TODO: double check ability to split out from interconnect costs
-        self.BOS_breakdown.transmission_and_interconnection_costs = self.bosnrelxls.getCell(11,2) * 1e3
+        self.BOS_breakdown.foundation_and_substructure_costs = self.foundation_cost
+        self.BOS_breakdown.electrical_costs = self.bosnrelxls.getCell(11,2) * 1e3
         self.BOS_breakdown.assembly_and_installation_costs = self.bosnrelxls.getCell(12,2) * 1e3 #TODO: vessels?
-        self.BOS_breakdown.contingencies_and_insurance_costs = self.bosnrelxls.getCell(18,2) * 1e3 + self.bosnrelxls.getCell(19,2) * 1e3
-        self.BOS_breakdown.decommissioning_costs = self.bosnrelxls.getCell(13,2) * 1e3
-        self.BOS_breakdown.construction_financing_costs = 0.0
-        self.BOS_breakdown.other_costs = self.bosnrelxls.getCell(14,2) * 1e3
-        self.BOS_breakdown.developer_profits = 0.0
+        self.BOS_breakdown.soft_costs = self.bosnrelxls.getCell(18,2) * 1e3 + self.bosnrelxls.getCell(19,2) * 1e3 + \
+                                        self.bosnrelxls.getCell(13,2) * 1e3 + self.bosnrelxls.getCell(14,2) * 1e3
+        self.BOS_breakdown.other_costs = 0.0
         
 #----------------------------
 
