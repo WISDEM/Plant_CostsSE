@@ -4,7 +4,13 @@
 # uses win32com on Windows, uses applescript on Mac
 
 import os,sys,subprocess
-from twister.components.global_config import PlatformIsWindows
+
+def PlatformIsWindows():
+    import platform
+    if ("windows" in platform.platform().lower()):
+        return True
+    else:
+        return False
 
 if (PlatformIsWindows()):
     import win32com.client as win32

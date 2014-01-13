@@ -301,30 +301,32 @@ class bos_nrel_onshore_component(ExtendedBOSCostAggregator):
         # insuranceCost += alpha_insurance*BOS
 
         # derivatives
-        d_diameter = rating*towerTopMass/1000.0 * nTurb * (1 + 0.02)
+        self.d_diameter = rating*towerTopMass/1000.0 * nTurb * (1 + 0.02)
 
-        d_hubHeight = 500 * nTurb * (1 + 0.02) + 500 * nTurb + ppc_deriv
+        self.d_hubHeight = 500 * nTurb * (1 + 0.02) + 500 * nTurb + ppc_deriv
 
-        d_TCC = (3.5 + 0.7 + 0.4 + 1.0)*totalMW
+        self.d_TCC = (3.5 + 0.7 + 0.4 + 1.0)*totalMW
         if performanceBond:
-            d_TCC += 10.0*totalMW
-        d_TCC /= rating
+            self.d_TCC += 10.0*totalMW
+        self.d_TCC /= rating
 
-        d_towerTopMass = rating*diameter/1000.0 * nTurb * (1 + 0.02)
-        d_towerTopMass /= 1000
+        self.d_towerTopMass = rating*diameter/1000.0 * nTurb * (1 + 0.02)
+        self.d_towerTopMass /= 1000
 
-        d_mult = 1.0/(1-alpha)
+        self.d_mult = 1.0/(1-alpha)
+
+    def linearize(self):
 
         # Jacobian        
-        self.J = np.array([[d_mult * d_diameter, d_mult * d_hubHeight, \
-                            d_mult * d_TCC, d_mult * d_towerTopMass]])
+        self.J = np.array([[self.d_mult * self.d_diameter, self.d_mult * self.d_hubHeight, \
+                            self.d_mult * self.d_TCC, self.d_mult * self.d_towerTopMass]])
 
     def provideJ(self):
 
-        input_keys = ['rotor_diameter', 'hubHeight', 'turbine_cost', 'RNA_mass']
-        output_keys = ['bos_cost']
+        inputs = ['rotor_diameter', 'hub_height', 'turbine_cost', 'RNA_mass']
+        outputs = ['bos_costs']
  
-        self.derivatives.set_first_derivative(input_keys, output_keys, self.J)   
+        return inputs, outputs, self.J 
 
 def example():
 

@@ -10,8 +10,7 @@ Copyright (c) NREL. All rights reserved.
 """
 
 import sys, os
-from twister.components.global_config import PlatformIsWindows
-from twister.models.xcel_wrapper import ExcelWrapper
+from Plant_CostsSE.xcel_wrapper import ExcelWrapper
 
 #import win32com.client as win32
 

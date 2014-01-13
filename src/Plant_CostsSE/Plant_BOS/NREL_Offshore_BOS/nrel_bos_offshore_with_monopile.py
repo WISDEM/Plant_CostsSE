@@ -153,6 +153,8 @@ class bos_nrel_offshore_component(ExtendedBOSCostAggregator):
         # compute!!
 
         self.bos_costs      = self.bosnrelxls.getCell(3,2) * 1e6 - self.bosnrelxls.getCell(10,2) * 1e3 + self.foundation_cost * self.turbine_number
+        construction_financing_rate = 0.03
+        self.bos_costs      += (self.bos_costs + self.turbine_cost*self.turbine_number)*construction_financing_rate
 
         self.BOS_breakdown.development_costs = self.bosnrelxls.getCell(7,2) * 1e3 + self.bosnrelxls.getCell(8,2) * 1e3
         self.BOS_breakdown.preparation_and_staging_costs = self.bosnrelxls.getCell(9,2) * 1e3 
