@@ -13,9 +13,6 @@ from fusedwind.plant_cost.fused_costs_asym import BOSVarTree, ExtendedBOSCostAgg
 from commonse.config import *
 import numpy as np
 
-from NREL_CSM.csmBOS import csmBOS
-from NREL_CSM.csmFoundation import csmFoundation
-
 class bos_csm_assembly(ExtendedBOSCostModel):
 
     def configure(self):
