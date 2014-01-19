@@ -65,6 +65,9 @@ class bos_csm_component(ExtendedBOSCostAggregator):
         """
         super(bos_csm_component, self).__init__()
 
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
         """
         Executes BOS model of the NREL _cost and Scaling Model to estimate wind plant BOS costs.
@@ -335,7 +338,17 @@ class bos_csm_component(ExtendedBOSCostAggregator):
                           self.d_foundation_d_rna + self.d_electrical_d_rna + self.d_assembly_d_rna + \
                           self.d_soft_d_rna + self.d_other_d_rna
     
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ('machine_rating', 'rotor_diameter', 'turbine_cost', 'hub_height', 'RNA_mass')     
+        outputs = ('BOS_breakdown.development_costs', 'BOS_breakdown.preparation_and_staging_costs',\
+                   'BOS_breakdown.transportation_costs', 'BOS_breakdown.foundation_and_substructure_costs',\
+                   'BOS_breakdown.electrical_costs', 'BOS_breakdown.assembly_and_installation_costs',\
+                   'BOS_breakdown.soft_costs', 'BOS_breakdown.other_costs', 'bos_costs')
+
+        return inputs, outputs
+
+    def provideJ(self):
         
         self.J = np.array([[self.d_development_d_rating, self.d_development_d_diameter, self.d_development_d_tcc, self.d_development_d_hheight, self.d_development_d_rna],\
                            [self.d_preparation_d_rating, self.d_preparation_d_diameter, self.d_preparation_d_tcc, self.d_preparation_d_hheight, self.d_preparation_d_rna],\
@@ -346,16 +359,8 @@ class bos_csm_component(ExtendedBOSCostAggregator):
                            [self.d_soft_d_rating, self.d_soft_d_diameter, self.d_soft_d_tcc, self.d_soft_d_hheight, self.d_soft_d_rna],\
                            [self.d_other_d_rating, self.d_other_d_diameter, self.d_other_d_tcc, self.d_other_d_hheight, self.d_other_d_rna],\
                            [self.d_cost_d_rating, self.d_cost_d_diameter, self.d_cost_d_tcc, self.d_cost_d_hheight, self.d_cost_d_rna]])
-    
-    def provideJ(self):
-
-        inputs = ['machine_rating', 'rotor_diameter', 'turbine_cost', 'hub_height', 'RNA_mass']        
-        outputs = ['BOS_breakdown.development_costs', 'BOS_breakdown.preparation_and_staging_costs',\
-                   'BOS_breakdown.transportation_costs', 'BOS_breakdown.foundation_and_substructure_costs',\
-                   'BOS_breakdown.electrical_costs', 'BOS_breakdown.assembly_and_installation_costs',\
-                   'BOS_breakdown.soft_costs', 'BOS_breakdown.other_costs', 'bos_costs']
       
-        return inputs, outputs, self.J    
+        return self.J    
    
 #-----------------------------------------------------------------
 

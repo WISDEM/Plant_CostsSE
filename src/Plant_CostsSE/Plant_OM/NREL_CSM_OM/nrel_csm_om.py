@@ -68,6 +68,9 @@ class om_csm_component(ExtendedOPEXAggregator):
         """
         super(om_csm_component, self).__init__()
 
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
         """
         Execute the O&M Model of the NREL _cost and Scaling Model.
@@ -141,19 +144,22 @@ class om_csm_component(ExtendedOPEXAggregator):
         self.d_opex_d_aep = self.d_preventative_d_aep + self.d_corrective_d_aep + self.d_lease_d_aep + self.d_other_d_aep
         self.d_opex_d_rating = self.d_preventative_d_rating + self.d_corrective_d_rating + self.d_lease_d_rating + self.d_other_d_rating
 
-    def linearize(self):
-        
-        self.J = np.array([[self.d_preventative_d_aep, self.d_preventative_d_rating], [self.d_corrective_d_aep, self.d_corrective_d_rating],\
-                           [self.d_lease_d_aep, self.d_lease_d_rating], [self.d_other_d_aep, self.d_other_d_rating],\
-                           [self.d_opex_d_aep, self.d_opex_d_rating]])
+    def list_deriv_vars(self):
+
+
+        inputs = ('net_aep', 'machine_rating')       
+        outputs = ('OPEX_breakdown.preventative_opex', 'OPEX_breakdown.corrective_opex', 'OPEX_breakdown.lease_opex', \
+                  'OPEX_breakdown.other_opex', 'avg_annual_opex')
+
+        return inputs, outputs
     
     def provideJ(self):
 
-        inputs = ['net_aep', 'machine_rating']        
-        outputs = ['OPEX_breakdown.preventative_opex', 'OPEX_breakdown.corrective_opex', 'OPEX_breakdown.lease_opex', \
-                  'OPEX_breakdown.other_opex', 'avg_annual_opex']
+        self.J = np.array([[self.d_preventative_d_aep, self.d_preventative_d_rating], [self.d_corrective_d_aep, self.d_corrective_d_rating],\
+                           [self.d_lease_d_aep, self.d_lease_d_rating], [self.d_other_d_aep, self.d_other_d_rating],\
+                           [self.d_opex_d_aep, self.d_opex_d_rating]])
         
-        return inputs, outputs, self.J
+        return self.J
 
 
 def example():

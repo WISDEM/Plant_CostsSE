@@ -25,6 +25,9 @@ class bos_nrel_onshore_component(ExtendedBOSCostAggregator):
 
         super(bos_nrel_onshore_component, self).__init__()
 
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
 
         rating = self.machine_rating
@@ -315,18 +318,19 @@ class bos_nrel_onshore_component(ExtendedBOSCostAggregator):
 
         self.d_mult = 1.0/(1-alpha)
 
-    def linearize(self):
+    def list_deriv_vars(self):
 
+        inputs = ('rotor_diameter', 'hub_height', 'turbine_cost', 'RNA_mass')
+        outputs = ('bos_costs')
+
+        return inputs, outputs
+
+    def provideJ(self):
         # Jacobian        
         self.J = np.array([[self.d_mult * self.d_diameter, self.d_mult * self.d_hubHeight, \
                             self.d_mult * self.d_TCC, self.d_mult * self.d_towerTopMass]])
-
-    def provideJ(self):
-
-        inputs = ['rotor_diameter', 'hub_height', 'turbine_cost', 'RNA_mass']
-        outputs = ['bos_costs']
  
-        return inputs, outputs, self.J 
+        return self.J 
 
 def example():
 
