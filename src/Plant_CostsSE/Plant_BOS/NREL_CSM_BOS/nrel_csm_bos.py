@@ -340,11 +340,11 @@ class bos_csm_component(ExtendedBOSCostAggregator):
     
     def list_deriv_vars(self):
 
-        inputs = ('machine_rating', 'rotor_diameter', 'turbine_cost', 'hub_height', 'RNA_mass')     
-        outputs = ('BOS_breakdown.development_costs', 'BOS_breakdown.preparation_and_staging_costs',\
+        inputs = ['machine_rating', 'rotor_diameter', 'turbine_cost', 'hub_height', 'RNA_mass']     
+        outputs = ['BOS_breakdown.development_costs', 'BOS_breakdown.preparation_and_staging_costs',\
                    'BOS_breakdown.transportation_costs', 'BOS_breakdown.foundation_and_substructure_costs',\
                    'BOS_breakdown.electrical_costs', 'BOS_breakdown.assembly_and_installation_costs',\
-                   'BOS_breakdown.soft_costs', 'BOS_breakdown.other_costs', 'bos_costs')
+                   'BOS_breakdown.soft_costs', 'BOS_breakdown.other_costs', 'bos_costs']
 
         return inputs, outputs
 

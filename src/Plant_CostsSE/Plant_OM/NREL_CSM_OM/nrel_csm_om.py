@@ -147,9 +147,9 @@ class om_csm_component(ExtendedOPEXAggregator):
     def list_deriv_vars(self):
 
 
-        inputs = ('net_aep', 'machine_rating')       
-        outputs = ('OPEX_breakdown.preventative_opex', 'OPEX_breakdown.corrective_opex', 'OPEX_breakdown.lease_opex', \
-                  'OPEX_breakdown.other_opex', 'avg_annual_opex')
+        inputs = ['net_aep', 'machine_rating']
+        outputs = ['OPEX_breakdown.preventative_opex', 'OPEX_breakdown.corrective_opex', 'OPEX_breakdown.lease_opex', \
+                  'OPEX_breakdown.other_opex', 'avg_annual_opex']
 
         return inputs, outputs
     

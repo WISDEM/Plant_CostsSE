@@ -320,8 +320,8 @@ class bos_nrel_onshore_component(ExtendedBOSCostAggregator):
 
     def list_deriv_vars(self):
 
-        inputs = ('rotor_diameter', 'hub_height', 'turbine_cost', 'RNA_mass')
-        outputs = ('bos_costs')
+        inputs = ['rotor_diameter', 'hub_height', 'turbine_cost', 'RNA_mass']
+        outputs = ['bos_costs']
 
         return inputs, outputs
 
