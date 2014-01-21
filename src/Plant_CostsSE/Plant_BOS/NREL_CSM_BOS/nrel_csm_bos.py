@@ -15,15 +15,19 @@ import numpy as np
 
 class bos_csm_assembly(ExtendedBOSCostModel):
 
+    sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
+    year = Int(2009, iotype='in', desc='year for project start')
+    month = Int(12, iotype = 'in', desc= 'month for project start')
+
     def configure(self):
 
         super(bos_csm_assembly, self).configure()
     
         self.replace('bos', bos_csm_component())
 
-        self.create_passthrough('bos.sea_depth')
-        self.create_passthrough('bos.year')
-        self.create_passthrough('bos.month')
+        self.connect('sea_depth','bos.sea_depth')
+        self.connect('year','bos.year')
+        self.connect('month','bos.month')
 
 class bos_csm_component(ExtendedBOSCostAggregator):
 

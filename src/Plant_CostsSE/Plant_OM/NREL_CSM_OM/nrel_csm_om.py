@@ -15,18 +15,28 @@ import numpy as np
 
 class om_csm_assembly(ExtendedOPEXModel):
 
+    # variables
+    machine_rating = Float(5000.0, units = 'kW', iotype = 'in', desc = 'rated power for a wind turbine')
+    net_aep = Float(1701626526.28, units = 'kW * h', iotype = 'in', desc = 'annual energy production for the plant')
+
+    # parameters
+    sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
+    year = Int(2009, units='yr', iotype='in', desc='year for project start')
+    month = Int(12, iotype = 'in', desc= 'month for project start') # units = months
+    turbine_number = Int(100, iotype = 'in', desc = 'number of turbines at plant')
+
     def configure(self):
 
         super(om_csm_assembly,self).configure()
       
         self.replace('opex', om_csm_component())
         
-        self.create_passthrough('opex.machine_rating')
-        self.create_passthrough('opex.sea_depth')
-        self.create_passthrough('opex.net_aep')
-        self.create_passthrough('opex.year')
-        self.create_passthrough('opex.month')
-        self.create_passthrough('opex.turbine_number')
+        self.connect('machine_rating','opex.machine_rating')
+        self.connect('sea_depth','opex.sea_depth')
+        self.connect('net_aep','opex.net_aep')
+        self.connect('year','opex.year')
+        self.connect('month','opex.month')
+        self.connect('turbine_number','opex.turbine_number')
 
 class om_csm_component(ExtendedOPEXAggregator):
 
