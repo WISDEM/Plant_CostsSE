@@ -18,6 +18,7 @@ class bos_csm_assembly(ExtendedBOSCostModel):
     sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
     year = Int(2009, iotype='in', desc='year for project start')
     month = Int(12, iotype = 'in', desc= 'month for project start')
+    multiplier = Float(1.0, iotype='in')
 
     def configure(self):
 
@@ -28,6 +29,8 @@ class bos_csm_assembly(ExtendedBOSCostModel):
         self.connect('sea_depth','bos.sea_depth')
         self.connect('year','bos.year')
         self.connect('month','bos.month')
+        self.connect('multiplier','bos.multiplier')
+
 
 class bos_csm_component(ExtendedBOSCostAggregator):
 
@@ -35,6 +38,7 @@ class bos_csm_component(ExtendedBOSCostAggregator):
     sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
     year = Int(2009, iotype='in', desc='year for project start')
     month = Int(12, iotype = 'in', desc= 'month for project start')
+    multiplier = Float(1.0, iotype='in')
 
     def __init__(self):
         """
@@ -261,6 +265,7 @@ class bos_csm_component(ExtendedBOSCostAggregator):
             self.d_other_d_rating += d_surety_d_rating
 
         self.bos_costs = self.turbine_number * (bos_costs + suretyBond)
+        self.bos_costs *= self.multiplier  # TODO: add to gradients
 
         self.BOS_breakdown.development_costs = engPermits_costs * self.turbine_number
         self.BOS_breakdown.preparation_and_staging_costs = (roadsCivil_costs + portStaging_costs) * self.turbine_number
