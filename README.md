@@ -1,6 +1,4 @@
-# Plant_CostsSE
-
-A set of models for analyzing wind plant balance of station and operational expenditures for both land-based and offshore wind plants.
+Plant_CostsSE is a set of models for analyzing wind plant balance of station and operational expenditures for both land-based and offshore wind plants.
 
 Author: [K. Dykes](mailto:katherine.dykes@nrel.gov)
 
