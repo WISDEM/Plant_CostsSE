@@ -8,7 +8,7 @@ NumPy, SciPy, FUSED-Wind, OpenMDAO
 
 ## Installation
 
-Install Turbine_CostsSE within an activated OpenMDAO environment
+Install PLant_CostsSE within an activated OpenMDAO environment
 
 	$ plugin install
 
@@ -19,7 +19,11 @@ It is not recommended to install the software outside of OpenMDAO.
 To check if installation was successful try to import the module
 
 	$ python
-	> import plant_costsse.plant_costsse
+	> import nrel_csm_bos.nrel_csm_bos
+	> import nrel_csm_om.nrel_csm_om
+	> import ecn_om_offshore.ecn_om_offshore
+
+Note that you must have the ECN Offshore OPEX model and license in order to use the latter module.  This software contains only the OpenMDAO wrapper for the model.
 
 You may also run the unit tests.
 
