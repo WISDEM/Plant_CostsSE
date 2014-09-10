@@ -12,7 +12,7 @@ The following inputs and outputs are defined for NREL_CSM_BOS:
 
 .. literalinclude:: ../src/nrel_csm_bos/nrel_csm_bos.py
     :language: python
-    :start-after: bos_csm_assembly(ExtendedBOSCostModel)
+    :start-after: bos_csm_assembly(Assembly)
     :end-before: def configure(self)
     :prepend: class bos_csm_assembly(Assembly):
 
@@ -64,7 +64,7 @@ The following inputs and outputs are defined for NREL_CSM_OPEX:
 .. literalinclude:: ../src/ecn_offshore_opex/ecn_offshore_opex.py
     :language: python
     :start-after: opex_ecn_assembly(Assembly)
-    :end-before: def __init__(self, ssfile)
+    :end-before: def __init__(self, ssfile=None)
     :prepend: class opex_ecn_assembly(Assembly):
 
 Referenced Operational Expenditure Modules
