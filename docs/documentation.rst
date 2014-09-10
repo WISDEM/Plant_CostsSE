@@ -29,24 +29,24 @@ Referenced PPI Index Models (via commonse.config)
 
 
 
-.. currentmodule:: nrel_csm_om.nrel.csm.om
+.. currentmodule:: nrel_csm_opex.nrel_csm_opex
 
-Documentation for NREL_CSM_OM
+Documentation for NREL_CSM_OPEX
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following inputs and outputs are defined for NREL_CSM_OM:
+The following inputs and outputs are defined for NREL_CSM_OPEX:
 
-.. literalinclude:: ../src/nrel_csm_om/nrel_csm_om.py
+.. literalinclude:: ../src/nrel_csm_opex/nrel_csm_opex.py
     :language: python
-    :start-after: om_csm_assembly(ExtendedOPEXModel)
+    :start-after: opex_csm_assembly(Assembly)
     :end-before: def configure(self)
-    :prepend: class om_csm_assembly(Assembly):
+    :prepend: class opex_csm_assembly(Assembly):
 
 Referenced Operational Expenditure Modules
 ===========================================
-.. module:: nrel_csm_om.nrel_csm_om
-.. class:: om_csm_component
-.. class:: om_csm_assembly
+.. module:: nrel_csm_opex.nrel_csm_opex
+.. class:: opex_csm_component
+.. class:: opex_csm_assembly
 
 Referenced PPI Index Models (via commonse.config)
 =================================================
@@ -54,28 +54,28 @@ Referenced PPI Index Models (via commonse.config)
 .. class:: PPI
 
 
-.. currentmodule:: ecn_offshore_om.ecn_offshore_om
+.. currentmodule:: ecn_offshore_opex.ecn_offshore_opex
 
-Documentation for ECN_Offshore_OM
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Documentation for ECN_Offshore_OPEX
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following inputs and outputs are defined for NREL_CSM_OM:
+The following inputs and outputs are defined for NREL_CSM_OPEX:
 
-.. literalinclude:: ../src/ecn_offshore_om/ecn_offshore_om.py
+.. literalinclude:: ../src/ecn_offshore_opex/ecn_offshore_opex.py
     :language: python
-    :start-after: om_ecn_assembly(ExtendedOPEXModel)
+    :start-after: opex_ecn_assembly(Assembly)
     :end-before: def __init__(self, ssfile)
-    :prepend: class om_ecn_assembly(Assembly):
+    :prepend: class opex_ecn_assembly(Assembly):
 
 Referenced Operational Expenditure Modules
 ===========================================
-.. module:: ecn_offshore_om.ecn_offshore_om
-.. class:: om_ecn_offshore_component
-.. class:: om_ecn_assembly
+.. module:: ecn_offshore_opex.ecn_offshore_opex
+.. class:: opex_ecn_offshore_component
+.. class:: opex_ecn_assembly
 
 Supporting Models Including Excel Wrapper
 ==========================================
-.. module:: ecn_offshore_om.ecnomXLS
+.. module:: ecn_offshore_opex.ecnomXLS
 .. class:: ecnomXLS
 
 .. module:: xcel_wrapper

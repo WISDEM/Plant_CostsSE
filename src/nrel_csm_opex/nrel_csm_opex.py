@@ -8,12 +8,14 @@ Copyright (c) NREL. All rights reserved.
 from openmdao.main.api import Component, Assembly, set_as_top, VariableTree
 from openmdao.main.datatypes.api import Int, Bool, Float, Array, VarTree
 
-from fusedwind.plant_cost.fused_costs_asym import OPEXVarTree, ExtendedOPEXAggregator, ExtendedOPEXModel
+from fusedwind.plant_cost.fused_opex_costs import OPEXVarTree, ExtendedOPEXAggregator, ExtendedOPEXModel, configure_extended_opex
+from fusedwind.interface import implement_base
 
 from commonse.config import *
 import numpy as np
 
-class om_csm_assembly(ExtendedOPEXModel):
+@implement_base(ExtendedOPEXModel)
+class opex_csm_assembly(Assembly):
 
     # variables
     machine_rating = Float(5000.0, units = 'kW', iotype = 'in', desc = 'rated power for a wind turbine')
@@ -25,11 +27,17 @@ class om_csm_assembly(ExtendedOPEXModel):
     month = Int(12, iotype = 'in', desc= 'month for project start') # units = months
     turbine_number = Int(100, iotype = 'in', desc = 'number of turbines at plant')
 
+    # Outputs
+    avg_annual_opex = Float(iotype='out', desc='Average annual Operating Expenditures for a wind plant over its lifetime')
+    opex_breakdown = VarTree(OPEXVarTree(),iotype='out')
+
     def configure(self):
 
-        super(om_csm_assembly,self).configure()
+        super(opex_csm_assembly,self).configure()
+        
+        configure_extended_opex(self)
 
-        self.replace('opex', om_csm_component())
+        self.replace('opex', opex_csm_component())
 
         self.connect('machine_rating','opex.machine_rating')
         self.connect('sea_depth','opex.sea_depth')
@@ -38,7 +46,8 @@ class om_csm_assembly(ExtendedOPEXModel):
         self.connect('month','opex.month')
         self.connect('turbine_number','opex.turbine_number')
 
-class om_csm_component(ExtendedOPEXAggregator):
+@implement_base(ExtendedOPEXAggregator)
+class opex_csm_component(Component):
 
     # variables
     machine_rating = Float(5000.0, units = 'kW', iotype = 'in', desc = 'rated power for a wind turbine')
@@ -50,33 +59,16 @@ class om_csm_component(ExtendedOPEXAggregator):
     month = Int(12, iotype = 'in', desc= 'month for project start') # units = months
     turbine_number = Int(100, iotype = 'in', desc = 'number of turbines at plant')
 
+    # Outputs
+    avg_annual_opex = Float(iotype='out', desc='Average annual Operating Expenditures for a wind plant over its lifetime')
+    opex_breakdown = VarTree(OPEXVarTree(),iotype='out')
+
     def __init__(self):
         """
         OpenMDAO component to wrap O&M model of the NREL _cost and Scaling model data (csmOM.py).
 
-        Parameters
-        ----------
-        machine_rating : float
-          rated power for a wind turbine [kW]
-        sea_depth : float
-          sea depth for offshore wind plant [m]
-        year : int
-          year for project start
-        month : int
-          month for project start
-        turbine_number : int
-          number of turbines at plant
-        net_aep : float
-          annual energy production for the plant [kWh]
-
-        Returns
-        -------
-        OnMcost : float
-          O&M costs [USD]
-        plantOM : PlantOM
-          Variable tree for detailed O&M outputs
         """
-        super(om_csm_component, self).__init__()
+        Component.__init__(self)
 
         #controls what happens if derivatives are missing
         self.missing_deriv_policy = 'assume_zero'
@@ -107,7 +99,7 @@ class om_csm_component(ExtendedOPEXAggregator):
             costEscalator = ppi.compute('IPPI_OOM')
             ppi.ref_yr = 2002
 
-        self.OPEX_breakdown.preventative_opex = cost * costEscalator # in $/year
+        self.opex_breakdown.preventative_opex = cost * costEscalator # in $/year
 
         #LRC
         if not offshore:
@@ -119,7 +111,7 @@ class om_csm_component(ExtendedOPEXAggregator):
             costlrcEscFactor = ppi.compute('IPPI_OLR')
             ppi.ref_yr = 2002
 
-        self.OPEX_breakdown.corrective_opex = self.machine_rating * lrcCF * costlrcEscFactor * self.turbine_number # in $/yr
+        self.opex_breakdown.corrective_opex = self.machine_rating * lrcCF * costlrcEscFactor * self.turbine_number # in $/yr
 
         #LLC
         if not offshore:
@@ -129,14 +121,14 @@ class om_csm_component(ExtendedOPEXAggregator):
             leaseCF = 0.00108 # offshore
             costlandEscFactor = ppi.compute('IPPI_LSE')
 
-        self.OPEX_breakdown.lease_opex = self.net_aep * leaseCF * costlandEscFactor # in $/yr
+        self.opex_breakdown.lease_opex = self.net_aep * leaseCF * costlandEscFactor # in $/yr
 
         #Other
-        self.OPEX_breakdown.other_opex = 0.0
+        self.opex_breakdown.other_opex = 0.0
 
         #Total OPEX
-        self.avg_annual_opex = self.OPEX_breakdown.preventative_opex + self.OPEX_breakdown.corrective_opex \
-           + self.OPEX_breakdown.lease_opex
+        self.avg_annual_opex = self.opex_breakdown.preventative_opex + self.opex_breakdown.corrective_opex \
+           + self.opex_breakdown.lease_opex
 
 
         #dervivatives
@@ -158,8 +150,8 @@ class om_csm_component(ExtendedOPEXAggregator):
 
 
         inputs = ['net_aep', 'machine_rating']
-        outputs = ['OPEX_breakdown.preventative_opex', 'OPEX_breakdown.corrective_opex', 'OPEX_breakdown.lease_opex', \
-                  'OPEX_breakdown.other_opex', 'avg_annual_opex']
+        outputs = ['opex_breakdown.preventative_opex', 'opex_breakdown.corrective_opex', 'opex_breakdown.lease_opex', \
+                  'opex_breakdown.other_opex', 'avg_annual_opex']
 
         return inputs, outputs
 
@@ -176,7 +168,7 @@ def example():
 
     # simple test of module
 
-    om = om_csm_assembly()
+    om = opex_csm_assembly()
 
     om.machine_rating = 5000.0 # Need to manipulate input or underlying component will not execute
     om.net_aep = 1701626526.28
@@ -187,17 +179,17 @@ def example():
 
     om.run()
     print "OM offshore {:.1f}".format(om.avg_annual_opex)
-    print "OM by turbine {0}".format(om.OPEX_breakdown.preventative_opex / om.turbine_number)
-    print "LRC by turbine {0}".format(om.OPEX_breakdown.corrective_opex / om.turbine_number)
-    print "LLC by turbine {0}".format(om.OPEX_breakdown.lease_opex / om.turbine_number)
+    print "OM by turbine {0}".format(om.opex_breakdown.preventative_opex / om.turbine_number)
+    print "LRC by turbine {0}".format(om.opex_breakdown.corrective_opex / om.turbine_number)
+    print "LLC by turbine {0}".format(om.opex_breakdown.lease_opex / om.turbine_number)
     print
 
     om.sea_depth = 0.0
     om.run()
     print "OM onshore {:.1f}".format(om.avg_annual_opex)
-    print "OM by turbine {0}".format(om.OPEX_breakdown.preventative_opex / om.turbine_number)
-    print "LRC by turbine {0}".format(om.OPEX_breakdown.corrective_opex / om.turbine_number)
-    print "LLC by turbine {0}".format(om.OPEX_breakdown.lease_opex / om.turbine_number)
+    print "OM by turbine {0}".format(om.opex_breakdown.preventative_opex / om.turbine_number)
+    print "LRC by turbine {0}".format(om.opex_breakdown.corrective_opex / om.turbine_number)
+    print "LLC by turbine {0}".format(om.opex_breakdown.lease_opex / om.turbine_number)
 
 if __name__ == "__main__":
 

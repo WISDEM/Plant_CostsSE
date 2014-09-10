@@ -108,21 +108,23 @@ class ecnomXLS(object):
                 raise ValueError('No such file: {}'.format(ssfile))
                 #return 0
             self.xlsfile = ssfile
+        else:
+            self.xlsfile = " "
 
         if (not os.path.isfile(self.xlsfile)):
             print "xlsfile not valid: {}".format(self.xlsfile)
-            raise ValueError('No such file: {}'.format(self.xlsfile))
-
-        # Start Excel
-        res = self.xcel.openWorkbook(self.xlsfile)
-        if res != 0:
-            return res
-        
-#        if (self.debug):    
-#            print "Found %d sheets" % self.ss.Sheets.Count
-#            for i in range(1,self.ss.Sheets.Count+1):
-#                print "%2d %s" % (i, self.ss.Worksheets(i).Name)
-#            print
+            '''raise ValueError('No such file: {}'.format(self.xlsfile))'''
+        else:
+            # Start Excel
+            res = self.xcel.openWorkbook(self.xlsfile)
+            if res != 0:
+                return res
+            
+    #        if (self.debug):    
+    #            print "Found %d sheets" % self.ss.Sheets.Count
+    #            for i in range(1,self.ss.Sheets.Count+1):
+    #                print "%2d %s" % (i, self.ss.Worksheets(i).Name)
+    #            print
         
     #-----------------------
         

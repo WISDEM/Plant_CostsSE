@@ -52,10 +52,10 @@ The new result is:
 >>> BOS cost per turbine: 3084533.1
 
 
-Tutorial for NREL_CSM_OM
+Tutorial for NREL_CSM_OPEX
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As an example of NREL_CSM_OM, let us simulate operational expenditures for a land-based wind plant.  
+As an example of NREL_CSM_OPEX, let us simulate operational expenditures for a land-based wind plant.  
 
 The first step is to import the relevant files and set up the component.
 
@@ -107,10 +107,10 @@ The new result is:
 
 >>>LLC by turbine 20699.3
 
-Tutorial for ECN_Offshore_OM
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Tutorial for ECN_Offshore_OPEX
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As an example of ECN_Offshore_OM, let us simulate operational expenditures for an offshore wind plant.  
+As an example of ECN_Offshore_OPEX, let us simulate operational expenditures for an offshore wind plant.  
 
 The first step is to import the relevant files and set up the component.  Note that the location of the ECN model must be specified as an input to the wrapper.
 

@@ -11,35 +11,38 @@ from openmdao.main.datatypes.api import Int, Bool, Float, Array, VarTree
 from gamma import gamma   # our own version
 import numpy as np
 
-from fusedwind.plant_cost.fused_costs_asym import ExtendedOPEXAggregator, ExtendedOPEXModel
+from fusedwind.plant_cost.fused_opex_costs import OPEXVarTree, ExtendedOPEXAggregator, ExtendedOPEXModel, configure_extended_opex
+from fusedwind.interface import implement_base
 
 from ecnomXLS import ecnomXLS
 
-class om_ecn_assembly(ExtendedOPEXModel):
-    
+@implement_base(ExtendedOPEXModel)
+class opex_ecn_assembly(Assembly):
+
     # variables
     turbine_cost = Float(9000000.00, units='USD', iotype='in', desc = 'turbine system capital costs')
     machine_rating = Float(5000.0, units='kW', iotype='in', desc= 'wind turbine rated power')
-    
+
     # parameters
     turbine_number = Int(100, iotype='in', desc = 'total number of wind turbines at the plant')
     project_lifetime = Float(20.0, iotype='in', desc = 'project lifetime for wind plant')
-    
-    # outputs
+
+    # Outputs
+    avg_annual_opex = Float(iotype='out', desc='Average annual Operating Expenditures for a wind plant over its lifetime')
+    opex_breakdown = VarTree(OPEXVarTree(),iotype='out')
     availability  = Float(0.0, iotype='out', desc='Availability')
 
-    def __init__(self, ssfile):
+    def __init__(self, ssfile=None):
         
         self.ssfile = ssfile
       
-        super(om_ecn_assembly, self).__init__()
-
+        Assembly.__init__(self)
 
     def configure(self):
 
-        super(om_ecn_assembly,self).configure()
+        configure_extended_opex(self)
       
-        self.replace('opex', om_ecn_offshore_component(self.ssfile))
+        self.replace('opex', opex_ecn_offshore_component(self.ssfile))
         
         self.connect('turbine_cost','opex.turbine_cost')
         self.connect('machine_rating','opex.machine_rating')
@@ -48,7 +51,8 @@ class om_ecn_assembly(ExtendedOPEXModel):
 
         self.connect('opex.availability','availability')
 
-class om_ecn_offshore_component(ExtendedOPEXAggregator):
+@implement_base(ExtendedOPEXAggregator)
+class opex_ecn_offshore_component(Component):
     """ Evaluates the ECN O&M spreadsheet """
 
     # variables
@@ -59,34 +63,18 @@ class om_ecn_offshore_component(ExtendedOPEXAggregator):
     turbine_number = Int(100, iotype='in', desc = 'total number of wind turbines at the plant')
     project_lifetime = Float(20.0, iotype='in', desc = 'project lifetime for wind plant')
 
-    # outputs
+    # Outputs
+    avg_annual_opex = Float(iotype='out', desc='Average annual Operating Expenditures for a wind plant over its lifetime')
+    opex_breakdown = VarTree(OPEXVarTree(),iotype='out')
     availability  = Float(0.0, iotype='out', desc='Availability')
 
-    def __init__(self, ssfile):
+    def __init__(self, ssfile=None):
         """
         OpenMDAO component to wrap ECN Offshore O&M Excel Model (ecnomXLS.py).
         Call __init__ with a file name to override default ECN spreadsheet file
-
-        Parameters
-        ----------
-        turbineCost : float
-          turbine system capital costs per turbine [USD]
-        machine_rating : float
-          rated power for a wind turbine [kW]
-        turbine_number : int
-          number of turbines at plant
-        project_lifetime : float
-          project liftime for wind plant
-        
-        Returns
-        -------
-        plantOM : PlantOM
-          Variable tree for detailed O&M outputs    
-        availability : float
-          availability for wind plant
         """
         
-        super(om_ecn_offshore_component, self).__init__()
+        Component.__init__(self)
 
         #open excel account
         self.ecnxls = ecnomXLS(debug=False)
@@ -147,12 +135,12 @@ class om_ecn_offshore_component(ExtendedOPEXAggregator):
 
         self.availability = self.ecnxls.getCell(20,9)
         self.avg_annual_opex      = self.ecnxls.getCell(56,9) * 1000
-        self.OPEX_breakdown.lease_opex = 21.0 * self.turbine_number * self.machine_rating # hack to include land lease costs not in ECN model, cost from COE Review 2011
-        self.avg_annual_opex += self.OPEX_breakdown.lease_opex
+        self.opex_breakdown.lease_opex = 21.0 * self.turbine_number * self.machine_rating # hack to include land lease costs not in ECN model, cost from COE Review 2011
+        self.avg_annual_opex += self.opex_breakdown.lease_opex
 
-        self.OPEX_breakdown.corrective_opex = self.ecnxls.getCell(51,9) * 1000 + self.ecnxls.getCell(52,9) * 1000
-        self.OPEX_breakdown.preventative_opex = self.ecnxls.getCell(53,9) * 1000
-        self.OPEX_breakdown.other_opex    = self.ecnxls.getCell(54,9) * 1000
+        self.opex_breakdown.corrective_opex = self.ecnxls.getCell(51,9) * 1000 + self.ecnxls.getCell(52,9) * 1000
+        self.opex_breakdown.preventative_opex = self.ecnxls.getCell(53,9) * 1000
+        self.opex_breakdown.other_opex    = self.ecnxls.getCell(54,9) * 1000
         
     def close(self):
         """
@@ -164,7 +152,7 @@ class om_ecn_offshore_component(ExtendedOPEXAggregator):
 
 def example(ssfile):
              
-    om = om_ecn_assembly(ssfile)
+    om = opex_ecn_assembly(ssfile)
     om.machine_rating = 5000.0
     om.turbine_cost = 9000000.0
     om.turbine_number = 100
@@ -174,9 +162,9 @@ def example(ssfile):
 
     print "Availability {:.1f}% ".format(om.availability*100.0)
     print "OnM Annual Costs ${:.3f} ".format(om.avg_annual_opex)
-    print "OM by turbine {0}".format(om.OPEX_breakdown.preventative_opex / om.turbine_number)
-    print "LRC by turbine {0}".format(om.OPEX_breakdown.corrective_opex / om.turbine_number)
-    print "LLC by turbine {0}".format(om.OPEX_breakdown.lease_opex / om.turbine_number)
+    print "OM by turbine {0}".format(om.opex_breakdown.preventative_opex / om.turbine_number)
+    print "LRC by turbine {0}".format(om.opex_breakdown.corrective_opex / om.turbine_number)
+    print "LLC by turbine {0}".format(om.opex_breakdown.lease_opex / om.turbine_number)
 
 if __name__ == "__main__": # pragma: no cover         
 

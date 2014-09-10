@@ -24,8 +24,8 @@ To check if installation was successful try to import the module
 .. code-block:: python
 
     > import nrel_csm_bos.nrel_csm_bos
-    > import nrel_csm_om.nrel_csm_om
-    > import ecn_om_offshore.ecn_om_offshore
+    > import nrel_csm_opex.nrel_csm_opex
+    > import ecn_opex_offshore.ecn_opex_offshore
 
 Note that you must have the ECN Offshore OPEX model and license in order to use the latter module.  This software contains only the OpenMDAO wrapper for the model.
 

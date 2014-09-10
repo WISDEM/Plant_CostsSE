@@ -8,73 +8,43 @@ Copyright (c) NREL. All rights reserved.
 from openmdao.main.api import Component, Assembly, VariableTree
 from openmdao.main.datatypes.api import Int, Bool, Float, Array, VarTree
 
-from fusedwind.plant_cost.fused_costs_asym import BOSVarTree, ExtendedBOSCostAggregator, ExtendedBOSCostModel
+from fusedwind.plant_cost.fused_bos_costs import BOSVarTree, ExtendedBOSCostAggregator, ExtendedBOSCostModel, configure_extended_bos
+from fusedwind.interface import implement_base
 
 from commonse.config import *
 import numpy as np
 
-class bos_csm_assembly(ExtendedBOSCostModel):
+@implement_base(ExtendedBOSCostAggregator)
+class bos_csm_component(Component):
 
+    # Variables
+    machine_rating = Float(iotype='in', units='kW', desc='turbine machine rating')
+    rotor_diameter=Float(iotype='in', units='m', desc='rotor diameter')
+    hub_height = Float(iotype='in', units='m', desc='hub height')
+    RNA_mass = Float(iotype='in', units='kg', desc='Rotor Nacelle Assembly mass')
+    turbine_cost = Float(iotype='in', units='USD', desc='Single Turbine Capital _costs')
+    
+    # Parameters
+    turbine_number = Int(iotype='in', desc='number of turbines in project')
     sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
     year = Int(2009, iotype='in', desc='year for project start')
     month = Int(12, iotype = 'in', desc= 'month for project start')
     multiplier = Float(1.0, iotype='in')
 
-    def configure(self):
-
-        super(bos_csm_assembly, self).configure()
-
-        self.replace('bos', bos_csm_component())
-
-        self.connect('sea_depth','bos.sea_depth')
-        self.connect('year','bos.year')
-        self.connect('month','bos.month')
-        self.connect('multiplier','bos.multiplier')
-
-
-class bos_csm_component(ExtendedBOSCostAggregator):
-
-    # parameters
-    sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
-    year = Int(2009, iotype='in', desc='year for project start')
-    month = Int(12, iotype = 'in', desc= 'month for project start')
-    multiplier = Float(1.0, iotype='in')
+    # Outputs
+    bos_breakdown = VarTree(BOSVarTree(), iotype='out', desc='BOS cost breakdown')
+    bos_costs = Float(iotype='out', desc='Overall wind plant balance of station/system costs up to point of comissioning')
 
     def __init__(self):
         """
         OpenMDAO component to wrap BOS model of the NREL _cost and Scaling Model (csmBOS.py)
 
-        Parameters
-        ----------
-        rotor_diameter : float
-          rotor diameter of the machine [m]
-        machine_rating : float
-          rated power for a wind turbine [kW]
-        hub_height : float
-          hub height for wind turbine [m]
-        sea_depth : float
-          sea depth for offshore wind plant [m]
-        turbine_cost : float
-          Turbine capital costs per turbine [USD]
-        year : int
-          year of project start
-        month : int
-          month of project start
-        turbine_number : int
-          number of turbines at plant
-
-        Returns
-        -------
-        BOS_cost : float
-          Balance of station total costs excluding foundation
-        plantBOS : PlantBOS
-          Variable tree container for detailed BOS cost breakdown based on NREL Offshore _cost Breakdown Structure
-
         """
-        super(bos_csm_component, self).__init__()
+        #super(bos_csm_component, self).__init__() #update for FUSED - not recognizing bos_csm_component super due to decorator
+        Component.__init__(self)
 
         #controls what happens if derivatives are missing
-        self.missing_deriv_policy = 'assume_zero'
+        self.missing_deriv_policy = 'assume_zero' 
 
     def execute(self):
         """
@@ -267,21 +237,21 @@ class bos_csm_component(ExtendedBOSCostAggregator):
         self.bos_costs = self.turbine_number * (bos_costs + suretyBond)
         self.bos_costs *= self.multiplier  # TODO: add to gradients
 
-        self.BOS_breakdown.development_costs = engPermits_costs * self.turbine_number
-        self.BOS_breakdown.preparation_and_staging_costs = (roadsCivil_costs + portStaging_costs) * self.turbine_number
-        self.BOS_breakdown.transportation_costs = (transportation_costs * self.turbine_number)
-        self.BOS_breakdown.foundation_and_substructure_costs = foundation_cost * self.turbine_number
-        self.BOS_breakdown.electrical_costs = electrical_costs * self.turbine_number
-        self.BOS_breakdown.assembly_and_installation_costs = installation_costs * self.turbine_number
-        self.BOS_breakdown.soft_costs = 0.0
-        self.BOS_breakdown.other_costs = (pai_costs + scour_costs + suretyBond) * self.turbine_number
+        self.bos_breakdown.development_costs = engPermits_costs * self.turbine_number
+        self.bos_breakdown.preparation_and_staging_costs = (roadsCivil_costs + portStaging_costs) * self.turbine_number
+        self.bos_breakdown.transportation_costs = (transportation_costs * self.turbine_number)
+        self.bos_breakdown.foundation_and_substructure_costs = foundation_cost * self.turbine_number
+        self.bos_breakdown.electrical_costs = electrical_costs * self.turbine_number
+        self.bos_breakdown.assembly_and_installation_costs = installation_costs * self.turbine_number
+        self.bos_breakdown.soft_costs = 0.0
+        self.bos_breakdown.other_costs = (pai_costs + scour_costs + suretyBond) * self.turbine_number
 
-        '''print self.BOS_breakdown.foundation_and_substructure_costs
-        print self.BOS_breakdown.transportation_costs
-        print self.BOS_breakdown.preparation_and_staging_costs
-        print self.BOS_breakdown.assembly_and_installation_costs
-        print self.BOS_breakdown.electrical_costs
-        print self.BOS_breakdown.development_costs
+        '''print self.bos_breakdown.foundation_and_substructure_costs
+        print self.bos_breakdown.transportation_costs
+        print self.bos_breakdown.preparation_and_staging_costs
+        print self.bos_breakdown.assembly_and_installation_costs
+        print self.bos_breakdown.electrical_costs
+        print self.bos_breakdown.development_costs
         print pai_costs * self.turbine_number
         print scour_costs * self.turbine_number
         print suretyBond * self.turbine_number'''
@@ -350,10 +320,10 @@ class bos_csm_component(ExtendedBOSCostAggregator):
     def list_deriv_vars(self):
 
         inputs = ['machine_rating', 'rotor_diameter', 'turbine_cost', 'hub_height', 'RNA_mass']
-        outputs = ['BOS_breakdown.development_costs', 'BOS_breakdown.preparation_and_staging_costs',\
-                   'BOS_breakdown.transportation_costs', 'BOS_breakdown.foundation_and_substructure_costs',\
-                   'BOS_breakdown.electrical_costs', 'BOS_breakdown.assembly_and_installation_costs',\
-                   'BOS_breakdown.soft_costs', 'BOS_breakdown.other_costs', 'bos_costs']
+        outputs = ['bos_breakdown.development_costs', 'bos_breakdown.preparation_and_staging_costs',\
+                   'bos_breakdown.transportation_costs', 'bos_breakdown.foundation_and_substructure_costs',\
+                   'bos_breakdown.electrical_costs', 'bos_breakdown.assembly_and_installation_costs',\
+                   'bos_breakdown.soft_costs', 'bos_breakdown.other_costs', 'bos_costs']
 
         return inputs, outputs
 
@@ -370,6 +340,46 @@ class bos_csm_component(ExtendedBOSCostAggregator):
                            [self.d_cost_d_rating, self.d_cost_d_diameter, self.d_cost_d_tcc, self.d_cost_d_hheight, self.d_cost_d_rna]])
 
         return self.J
+
+
+@implement_base(ExtendedBOSCostModel)
+class bos_csm_assembly(Assembly):
+
+    # Variables
+    machine_rating = Float(iotype='in', units='kW', desc='turbine machine rating')
+    rotor_diameter=Float(iotype='in', units='m', desc='rotor diameter')
+    hub_height = Float(iotype='in', units='m', desc='hub height')
+    RNA_mass = Float(iotype='in', units='kg', desc='Rotor Nacelle Assembly mass')
+    turbine_cost = Float(iotype='in', units='USD', desc='Single Turbine Capital _costs')
+    
+    # Parameters
+    turbine_number = Int(iotype='in', desc='number of turbines in project')
+    sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
+    year = Int(2009, iotype='in', desc='year for project start')
+    month = Int(12, iotype = 'in', desc= 'month for project start')
+    multiplier = Float(1.0, iotype='in')
+
+    # Outputs
+    bos_breakdown = VarTree(BOSVarTree(), iotype='out', desc='BOS cost breakdown')
+    bos_costs = Float(iotype='out', desc='Overall wind plant balance of station/system costs up to point of comissioning')
+
+    def configure(self):
+
+        super(bos_csm_assembly, self).configure()
+
+        configure_extended_bos(self)
+        
+        self.replace('bos',bos_csm_component())
+
+        self.connect('machine_rating','bos.machine_rating')
+        self.connect('rotor_diameter','bos.rotor_diameter')
+        self.connect('hub_height','bos.hub_height')
+        self.connect('RNA_mass','bos.RNA_mass')
+        self.connect('turbine_number','bos.turbine_number')
+        self.connect('sea_depth','bos.sea_depth')
+        self.connect('year','bos.year')
+        self.connect('month','bos.month')
+        self.connect('multiplier','bos.multiplier')
 
 #-----------------------------------------------------------------
 

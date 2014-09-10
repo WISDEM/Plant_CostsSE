@@ -42,9 +42,9 @@ print
 # 6 ----------
 
 # A simple test of nrel_csm_om model
-from nrel_csm_om.nrel_csm_om import om_csm_assembly
+from nrel_csm_opex.nrel_csm_opex import opex_csm_assembly
 
-om = om_csm_assembly()
+om = opex_csm_assembly()
 
 # 6 ----------
 # 7 ----------
@@ -66,9 +66,9 @@ om.run()
 # 9 -----------
 
 print "OM offshore {:.1f}".format(om.avg_annual_opex)
-print "OM by turbine {0}".format(om.OPEX_breakdown.preventative_opex / om.turbine_number)
-print "LRC by turbine {0}".format(om.OPEX_breakdown.corrective_opex / om.turbine_number)
-print "LLC by turbine {0}".format(om.OPEX_breakdown.lease_opex / om.turbine_number)
+print "OM by turbine {0}".format(om.opex_breakdown.preventative_opex / om.turbine_number)
+print "LRC by turbine {0}".format(om.opex_breakdown.corrective_opex / om.turbine_number)
+print "LLC by turbine {0}".format(om.opex_breakdown.lease_opex / om.turbine_number)
 print
 
 # 9 -----------
@@ -77,17 +77,17 @@ print
 om.sea_depth = 0.0
 om.run()
 print "OM onshore {:.1f}".format(om.avg_annual_opex)
-print "OM by turbine {0}".format(om.OPEX_breakdown.preventative_opex / om.turbine_number)
-print "LRC by turbine {0}".format(om.OPEX_breakdown.corrective_opex / om.turbine_number)
-print "LLC by turbine {0}".format(om.OPEX_breakdown.lease_opex / om.turbine_number)
+print "OM by turbine {0}".format(om.opex_breakdown.preventative_opex / om.turbine_number)
+print "LRC by turbine {0}".format(om.opex_breakdown.corrective_opex / om.turbine_number)
+print "LLC by turbine {0}".format(om.opex_breakdown.lease_opex / om.turbine_number)
 
 # 10 -----------
 # 11 ----------
 
 # A simple test of ecn_offshore_om model
-from ecn_offshore_om.ecn_offshore_om import om_ecn_assembly
+from ecn_offshore_opex.ecn_offshore_opex import opex_ecn_assembly
 
-om2 = om_ecn_assembly('C:/Models/ECN Model/ECN O&M Model.xls')
+om2 = opex_ecn_assembly('C:/Models/ECN Model/ECN O&M Model.xls')
 
 # 11 ----------
 # 12 ----------
@@ -108,8 +108,8 @@ om2.run()
 
 print "Availability {:.1f}% ".format(om2.availability*100.0)
 print "OnM Annual Costs ${:.3f} ".format(om2.avg_annual_opex)
-print "OM by turbine {0}".format(om2.OPEX_breakdown.preventative_opex / om2.turbine_number)
-print "LRC by turbine {0}".format(om2.OPEX_breakdown.corrective_opex / om2.turbine_number)
-print "LLC by turbine {0}".format(om2.OPEX_breakdown.lease_opex / om2.turbine_number)
+print "OM by turbine {0}".format(om2.opex_breakdown.preventative_opex / om2.turbine_number)
+print "LRC by turbine {0}".format(om2.opex_breakdown.corrective_opex / om2.turbine_number)
+print "LLC by turbine {0}".format(om2.opex_breakdown.lease_opex / om2.turbine_number)
 
 # 14 ----------

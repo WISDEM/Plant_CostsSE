@@ -16,7 +16,7 @@ kwargs = {'author': 'Katherine Dykes and George Scott',
  'name': 'Plant_CostsSE',
  'package_data': {'Plant_CostsSE': []},
  'package_dir': {'': 'src'},
- 'packages': ['nrel_csm_bos', 'test', 'nrel_csm_om', 'ecn_offshore_om'],
+ 'packages': ['nrel_csm_bos', 'test', 'nrel_csm_opex', 'ecn_offshore_opex'],
  'zip_safe': False}
 
 
