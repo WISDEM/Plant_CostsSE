@@ -8,7 +8,7 @@ Copyright (c) NREL. All rights reserved.
 from openmdao.main.api import Component, Assembly, set_as_top, VariableTree
 from openmdao.main.datatypes.api import Int, Bool, Float, Array, VarTree
 
-from fusedwind.plant_cost.fused_opex_costs import OPEXVarTree, ExtendedOPEXAggregator, ExtendedOPEXModel, configure_extended_opex
+from fusedwind.plant_cost.fused_opex import OPEXVarTree, ExtendedOPEXAggregator, ExtendedOPEXModel, configure_extended_opex
 from fusedwind.interface import implement_base
 
 from commonse.config import *

@@ -11,7 +11,7 @@ from openmdao.main.datatypes.api import Int, Bool, Float, Array, VarTree
 from gamma import gamma   # our own version
 import numpy as np
 
-from fusedwind.plant_cost.fused_opex_costs import OPEXVarTree, ExtendedOPEXAggregator, ExtendedOPEXModel, configure_extended_opex
+from fusedwind.plant_cost.fused_opex import OPEXVarTree, ExtendedOPEXAggregator, ExtendedOPEXModel, configure_extended_opex
 from fusedwind.interface import implement_base
 
 from ecnomXLS import ecnomXLS
