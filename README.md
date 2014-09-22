@@ -2,6 +2,10 @@ Plant_CostsSE is a set of models for analyzing wind plant balance of station and
 
 Author: [K. Dykes](mailto:katherine.dykes@nrel.gov)
 
+## Detailed Documentation
+
+For detailed documentation see <http://wisdem.github.io/Plant_CostsSE/>
+
 ## Prerequisites
 
 NumPy, SciPy, FUSED-Wind, OpenMDAO
@@ -29,6 +33,3 @@ You may also run the unit tests.
 
 	$ python src/test/test_Plant_CostsSE_gradients.py
 
-## Detailed Documentation
-
-Online documentation is available at <http://wisdem.github.io/Plant_CostsSE/>
