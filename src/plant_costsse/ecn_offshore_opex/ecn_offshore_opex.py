@@ -8,7 +8,6 @@ Copyright (c) NREL. All rights reserved.
 from openmdao.main.api import Component, Assembly, VariableTree
 from openmdao.main.datatypes.api import Int, Bool, Float, Array, VarTree
 
-from gamma import gamma   # our own version
 import numpy as np
 
 from fusedwind.plant_cost.fused_opex import OPEXVarTree, ExtendedOPEXAggregator, ExtendedOPEXModel, configure_extended_opex
@@ -20,8 +19,8 @@ from ecnomXLS import ecnomXLS
 class opex_ecn_assembly(Assembly):
 
     # variables
-    turbine_cost = Float(9000000.00, units='USD', iotype='in', desc = 'turbine system capital costs')
-    machine_rating = Float(5000.0, units='kW', iotype='in', desc= 'wind turbine rated power')
+    turbine_cost = Float(units='USD', iotype='in', desc = 'turbine system capital costs')
+    machine_rating = Float(units='kW', iotype='in', desc= 'wind turbine rated power')
 
     # parameters
     turbine_number = Int(100, iotype='in', desc = 'total number of wind turbines at the plant')
@@ -56,8 +55,8 @@ class opex_ecn_offshore_component(Component):
     """ Evaluates the ECN O&M spreadsheet """
 
     # variables
-    turbine_cost = Float(9000000.00, units='USD', iotype='in', desc = 'turbine system capital costs')
-    machine_rating = Float(5000.0, units='kW', iotype='in', desc= 'wind turbine rated power')
+    turbine_cost = Float(units='USD', iotype='in', desc = 'turbine system capital costs')
+    machine_rating = Float(units='kW', iotype='in', desc= 'wind turbine rated power')
 
     # parameters
     turbine_number = Int(100, iotype='in', desc = 'total number of wind turbines at the plant')
@@ -84,7 +83,7 @@ class opex_ecn_offshore_component(Component):
         """
         Executes the ECN O&M Offshore model using excel spreadsheet and finds total and detailed O&M costs for the plant as well as availability.
         """
-        print "In {0}.execute()...".format(self.__class__)
+        # print "In {0}.execute()...".format(self.__class__)
 
         # Inputs - copy to spreadsheet
 
@@ -96,40 +95,6 @@ class opex_ecn_offshore_component(Component):
         # set basic turbine inputs
         self.invCosts = self.turbine_cost / self.machine_rating  # investment costs per kW
         self.ecnxls.setCell( 6,8,self.invCosts)
-
-        """     
-        # Unnecessary - only used for AEP calculations which are not being done here
-        
-        # set turbine parameters
-        self.ecnxls.setCell(31,3,self.hubHeight)
-        self.windFarmEfficiency = (1.0 - self.arrayLosses) * (1.0 - self.soilingLosses)
-        self.ecnxls.setCell(34,3,self.windFarmEfficiency)
-
-        # set wind climate parameters
-        self.weibullL = self.windSpeed50m / np.exp(np.log(gamma(1.+1./self.weibullK)))
-        for irow in range(39,44):
-            self.ecnxls.setCell(irow,3,self.weibullK)
-            self.ecnxls.setCell(irow,4,self.weibullL)  
-        
-        self.windDataHeight = 50
-        self.ecnxls.setCell(37,4,self.windDataHeight)
-        self.ecnxls.setCell(38,9,self.shearExponent)
-
-        # input power curve        
-        windSpeed = 3
-        irow = 48
-        for i in xrange(0,self.powerCurve.shape[1]):
-           X = self.powerCurve[0,i]
-           if (windSpeed == X) and (windSpeed <= 33):
-             self.ecnxls.setCell(irow,4,self.powerCurve[1,i])
-             windSpeed +=1
-             irow += 1
-
-        # set capacity factor based on power curve results # todo: need to get from correct sheet
-        self.capFactor = self.ecnxls.getInputCell(27,3)
-        print self.capFactor
-        for irow in range(12,17):
-            self.ecnxls.setCell(irow,3,self.capFactor)"""
         
         # Outputs - read from spreadsheet
 
@@ -160,11 +125,13 @@ def example(ssfile):
     
     om.run()
 
-    print "Availability {:.1f}% ".format(om.availability*100.0)
-    print "OnM Annual Costs ${:.3f} ".format(om.avg_annual_opex)
-    print "OM by turbine {0}".format(om.opex_breakdown.preventative_opex / om.turbine_number)
-    print "LRC by turbine {0}".format(om.opex_breakdown.corrective_opex / om.turbine_number)
-    print "LLC by turbine {0}".format(om.opex_breakdown.lease_opex / om.turbine_number)
+    print "Average annual operational expenditures for an offshore wind plant with 100 NREL 5 MW turbines"
+    print "OPEX offshore ${:.2f} USD".format(om.avg_annual_opex)
+    print "Preventative OPEX by turbine ${:.2f} USD".format(om.opex_breakdown.preventative_opex / om.turbine_number)
+    print "Corrective OPEX by turbine ${:.2f} USD".format(om.opex_breakdown.corrective_opex / om.turbine_number)
+    print "Land Lease OPEX by turbine ${:.2f} USD".format(om.opex_breakdown.lease_opex / om.turbine_number)
+    print "and plant availability of {:.1f}% ".format(om.availability*100.0)
+    print
 
 if __name__ == "__main__": # pragma: no cover         
 

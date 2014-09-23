@@ -18,8 +18,8 @@ import numpy as np
 class opex_csm_assembly(Assembly):
 
     # variables
-    machine_rating = Float(5000.0, units = 'kW', iotype = 'in', desc = 'rated power for a wind turbine')
-    net_aep = Float(1701626526.28, units = 'kW * h', iotype = 'in', desc = 'annual energy production for the plant')
+    machine_rating = Float(units = 'kW', iotype = 'in', desc = 'rated power for a wind turbine')
+    net_aep = Float(units = 'kW * h', iotype = 'in', desc = 'annual energy production for the plant')
 
     # parameters
     sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
@@ -50,8 +50,8 @@ class opex_csm_assembly(Assembly):
 class opex_csm_component(Component):
 
     # variables
-    machine_rating = Float(5000.0, units = 'kW', iotype = 'in', desc = 'rated power for a wind turbine')
-    net_aep = Float(1701626526.28, units = 'kW * h', iotype = 'in', desc = 'annual energy production for the plant')
+    machine_rating = Float(units = 'kW', iotype = 'in', desc = 'rated power for a wind turbine')
+    net_aep = Float(units = 'kW * h', iotype = 'in', desc = 'annual energy production for the plant')
 
     # parameters
     sea_depth = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
@@ -130,7 +130,6 @@ class opex_csm_component(Component):
         self.avg_annual_opex = self.opex_breakdown.preventative_opex + self.opex_breakdown.corrective_opex \
            + self.opex_breakdown.lease_opex
 
-
         #dervivatives
         self.d_corrective_d_aep = 0.0
         self.d_corrective_d_rating = lrcCF * costlrcEscFactor * self.turbine_number
@@ -173,23 +172,26 @@ def example():
     om.machine_rating = 5000.0 # Need to manipulate input or underlying component will not execute
     om.net_aep = 1701626526.28
     om.sea_depth = 20.0
-    om.year = 2010
+    om.year = 2009
     om.month = 12
     om.turbine_number = 100
 
     om.run()
-    print "OM offshore {:.1f}".format(om.avg_annual_opex)
-    print "OM by turbine {0}".format(om.opex_breakdown.preventative_opex / om.turbine_number)
-    print "LRC by turbine {0}".format(om.opex_breakdown.corrective_opex / om.turbine_number)
-    print "LLC by turbine {0}".format(om.opex_breakdown.lease_opex / om.turbine_number)
+    print "Average annual operational expenditures for an offshore wind plant with 100 NREL 5 MW turbines"
+    print "OPEX offshore: ${:.2f} USD".format(om.avg_annual_opex)
+    print "Preventative OPEX by turbine: ${:.2f} USD".format(om.opex_breakdown.preventative_opex / om.turbine_number)
+    print "Corrective OPEX by turbine: ${:.2f} USD".format(om.opex_breakdown.corrective_opex / om.turbine_number)
+    print "Land Lease OPEX by turbine: ${:.2f} USD".format(om.opex_breakdown.lease_opex / om.turbine_number)
     print
 
     om.sea_depth = 0.0
     om.run()
-    print "OM onshore {:.1f}".format(om.avg_annual_opex)
-    print "OM by turbine {0}".format(om.opex_breakdown.preventative_opex / om.turbine_number)
-    print "LRC by turbine {0}".format(om.opex_breakdown.corrective_opex / om.turbine_number)
-    print "LLC by turbine {0}".format(om.opex_breakdown.lease_opex / om.turbine_number)
+    print "Average annual operational expenditures for an land-based wind plant with 100 NREL 5 MW turbines"
+    print "OPEX land-based ${:.2f}: USD".format(om.avg_annual_opex)
+    print "Preventative OPEX by turbine: ${:.2f} USD".format(om.opex_breakdown.preventative_opex / om.turbine_number)
+    print "Corrective OPEX by turbine: ${:.2f} USD".format(om.opex_breakdown.corrective_opex / om.turbine_number)
+    print "Land Lease OPEX by turbine: ${:.2f} USD".format(om.opex_breakdown.lease_opex / om.turbine_number)
+    print
 
 if __name__ == "__main__":
 

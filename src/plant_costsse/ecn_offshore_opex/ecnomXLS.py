@@ -10,7 +10,7 @@ Copyright (c) NREL. All rights reserved.
 """
 
 import sys, os
-from xcel_wrapper import ExcelWrapper
+from commonse.xcel_wrapper import ExcelWrapper
 
 #import win32com.client as win32
 

@@ -246,16 +246,6 @@ class bos_csm_component(Component):
         self.bos_breakdown.soft_costs = 0.0
         self.bos_breakdown.other_costs = (pai_costs + scour_costs + suretyBond) * self.turbine_number
 
-        '''print self.bos_breakdown.foundation_and_substructure_costs
-        print self.bos_breakdown.transportation_costs
-        print self.bos_breakdown.preparation_and_staging_costs
-        print self.bos_breakdown.assembly_and_installation_costs
-        print self.bos_breakdown.electrical_costs
-        print self.bos_breakdown.development_costs
-        print pai_costs * self.turbine_number
-        print scour_costs * self.turbine_number
-        print suretyBond * self.turbine_number'''
-
         # derivatives
         self.d_development_d_rating *= self.turbine_number
         self.d_preparation_d_rating *= self.turbine_number
@@ -375,6 +365,7 @@ class bos_csm_assembly(Assembly):
         self.connect('rotor_diameter','bos.rotor_diameter')
         self.connect('hub_height','bos.hub_height')
         self.connect('RNA_mass','bos.RNA_mass')
+        self.connect('turbine_cost','bos.turbine_cost')
         self.connect('turbine_number','bos.turbine_number')
         self.connect('sea_depth','bos.sea_depth')
         self.connect('year','bos.year')
@@ -389,20 +380,28 @@ def example():
     bos = bos_csm_assembly()
     bos.machine_rating = 5000.0
     bos.rotor_diameter = 126.0
-    bos.turbine_cost = 5950209.283
-    bos.turbine_number = 100
+    bos.turbine_cost = 5950209.28
     bos.hub_height = 90.0
     bos.RNA_mass = 256634.5 # RNA mass is not used in this simple model
+    bos.turbine_number = 100
+    bos.sea_depth = 20.0
+    bos.year = 2009
+    bos.month = 12
+    bos.multiplier = 1.0
+
     bos.run()
-    print "BOS cost offshore: {0}".format(bos.bos_costs)
-    print "BOS cost per turbine: {0}".format(bos.bos_costs / bos.turbine_number)
+    print "Balance of Station Costs for an offshore wind plant with 100 NREL 5 MW turbines"
+    print "BOS cost offshore: ${0:.2f} USD".format(bos.bos_costs)
+    print "BOS cost per turbine: ${0:.2f} USD".format(bos.bos_costs / bos.turbine_number)
     print
 
     bos.sea_depth = 0.0
     bos.turbine_cost = 5229222.77
+
     bos.run()
-    print "BOS cost onshore: {0}".format(bos.bos_costs)
-    print "BOS cost per turbine: {0}".format(bos.bos_costs / bos.turbine_number)
+    print "Balance of Station Costs for an land-based wind plant with 100 NREL 5 MW turbines"
+    print "BOS cost land-based: ${0:.2f} USD".format(bos.bos_costs)
+    print "BOS cost per turbine: ${0:.2f} USD".format(bos.bos_costs / bos.turbine_number)
     print
 
 if __name__ == "__main__":
