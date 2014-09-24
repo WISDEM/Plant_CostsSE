@@ -2,6 +2,10 @@ Plant_CostsSE is a set of models for analyzing wind plant balance of station and
 
 Author: [K. Dykes](mailto:katherine.dykes@nrel.gov)
 
+## Version
+
+This software is a beta version 0.1.0.
+
 ## Detailed Documentation
 
 For detailed documentation see <http://wisdem.github.io/Plant_CostsSE/>
