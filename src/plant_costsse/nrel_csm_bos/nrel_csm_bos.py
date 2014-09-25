@@ -227,12 +227,14 @@ class bos_csm_component(Component):
                     scour_costs
 
         self.d_other_d_tcc = 0.0
-        if (iDepth > 1):
+        if (self.sea_depth > 0.0):
             suretyBond = suretyBRate * (self.turbine_cost + bos_costs)
-            self.d_other_d_tcc = suretyBRate * self.turbine_number
+            self.d_other_d_tcc = suretyBRate
             d_surety_d_rating = suretyBRate * (self.d_development_d_rating + self.d_preparation_d_rating + self.d_transport_d_rating + \
                           self.d_foundation_d_rating + self.d_electrical_d_rating + self.d_assembly_d_rating + self.d_other_d_rating)
             self.d_other_d_rating += d_surety_d_rating
+        else:
+            suretyBond = 0.0
 
         self.bos_costs = self.turbine_number * (bos_costs + suretyBond)
         self.bos_costs *= self.multiplier  # TODO: add to gradients
@@ -245,7 +247,7 @@ class bos_csm_component(Component):
         self.bos_breakdown.assembly_and_installation_costs = installation_costs * self.turbine_number
         self.bos_breakdown.soft_costs = 0.0
         self.bos_breakdown.other_costs = (pai_costs + scour_costs + suretyBond) * self.turbine_number
-
+  
         # derivatives
         self.d_development_d_rating *= self.turbine_number
         self.d_preparation_d_rating *= self.turbine_number
@@ -278,7 +280,7 @@ class bos_csm_component(Component):
         self.d_electrical_d_tcc = 0.0
         self.d_assembly_d_tcc = 0.0
         self.d_soft_d_tcc = 0.0
-        #self.d_other_d_tcc
+        self.d_other_d_tcc *= self.turbine_number
         self.d_cost_d_tcc = self.d_development_d_tcc + self.d_preparation_d_tcc + self.d_transport_d_tcc + \
                           self.d_foundation_d_tcc + self.d_electrical_d_tcc + self.d_assembly_d_tcc + \
                           self.d_soft_d_tcc + self.d_other_d_tcc
