@@ -5,7 +5,7 @@ Plant_CostsSE
 
     Wind plant balance of station costs and operational expenditures models.
 
-    Author: `Katherine Dykes <mailto:katherine.dykes@nrel.gov>`_
+    Author: `Katherine Dykes <mailto:nrel.wisdem+plantcostsse@gmail.com>`_
 
     .. rubric:: Table of Contents
 

@@ -19,7 +19,7 @@ import sys, os
 sys.path.insert(0, os.path.abspath('.'))
 # sys.path.append(os.path.abspath('exts'))
 
-codeName = u'Turbine_CostsSE'
+codeName = u'Plant_CostsSE'
 authorName = u'Katherine Dykes'
 copyright = u'2014, NREL'
 version = '0.1'
