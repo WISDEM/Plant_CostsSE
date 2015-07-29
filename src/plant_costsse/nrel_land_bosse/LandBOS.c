@@ -379,35 +379,28 @@ double developmentCost(double developmentFee){
 }
 
 
-MultCost insuranceMultiplierAndCost(double tcc, double farmSize,
-        double foundationCost, int performanceBond){
+double insuranceMultiplierAndCost(double cost, double tcc, double farmSize, double foundationCost, int performanceBond){
 
-    MultCost result;
+    double result;
 
-    result.alpha = 3.5 + 0.7 + 0.4 + 1.0;
-    result.cost = (0.7 + 0.4 + 1.0) * tcc * farmSize;
+	double pb_rate = 0;
+	if (performanceBond)
+		pb_rate = 10.0;
 
-    if (performanceBond){
-        result.alpha += 10.0;
-        result.cost += 10.0 * tcc * farmSize;
-    }
-
-    result.alpha /= 1000.0;
-    result.cost += 0.02*foundationCost + 20000;
+	result = cost / 1000 * (3.5 + 0.7 + 0.4 + 1.0 + pb_rate) //rates are per $1000
+		+ (tcc * farmSize) * (0.7 + 0.4 + 1.0 + pb_rate) //tcc in $/kW times farmSize in MW is equal to per $1000
+		+ 0.02 * foundationCost
+		+ 20000;
 
     return result;
 }
 
 
-MultCost markupMultiplierAndCost(double transportationCost, double contingency,
-        double warranty, double useTax, double overhead, double profitMargin){
+double markupMultiplierAndCost(double cost, double contingency, double warranty, double useTax, double overhead, double profitMargin){
 
-    MultCost result;
+    double result;
 
-    result.alpha = (contingency + warranty + useTax + overhead + profitMargin)/100.0;
-
-    result.cost = -result.alpha * transportationCost;
-
+	markup = cost * (contingency + warranty + useTax + overhead + profitMargin) / 100.0; //convert from percentages to decimal
 
     return result;
 }
@@ -425,47 +418,35 @@ double totalCost(double rating, double diameter, double hubHt,
         double thermalBackfill, double overheadCollector,
         int performanceBond, double contingency, double warranty,
         double useTax, double overhead, double profitMargin,
-        double developmentFee, double transportDist){
+        double developmentFee, double transportDist)
+{
+	//compute cost for all items EXCEPT turbine & transport- markup and insurance do not apply to turbine & transport costs
+	double cost = 0.0;
+	cost += engineeringCost(nTurb, farmSize);
+	cost += powerPerformanceCost(hubHt, permanent, temporary);
+	cost += siteCompoundCost(accessRoadEntrances, constructionTime, farmSize);
+	cost += buildingCost(buildingSize);
+	cost += transmissionCost(voltage, distInter, newSwitchyardRequired);
+	cost += developmentCost(developmentFee);
+	cost += accessRoadsCost(terrain, layout, nTurb, diameter, constructionTime, accessRoadEntrances);
+	double foundCost = foundationCost(rating, diameter, topMass, hubHt, soil, nTurb);
+	cost += foundCost;
+	cost += erectionCost(rating, hubHt, nTurb, weatherDelayDays, craneBreakdowns, deliveryAssistRequired);
+	cost += electricalMaterialsCost(terrain, layout, farmSize, diameter, nTurb, padMountTransformer, thermalBackfill);
+	cost += electricalInstallationCost(terrain, layout, farmSize, diameter, nTurb, rockTrenchingLength, overheadCollector);
+	cost += substationCost(voltage, farmSize);
+	cost += projectMgmtCost(constructionTime);
 
-    double cost = 0.0;
-    double alpha = 0.0;
+	//now find insurance costs and markup costs using the current cost (before including turbine & transport)
+	double ins = insuranceMultiplierAndCost(cost, tcc, farmSize, foundCost, performanceBond);
+	double markup = markupMultiplierAndCost(cost, contingency, warranty, useTax, overhead, profitMargin);
+	cost += ins + markup;
 
-    double transCost = transportationCost(tcc, rating, nTurb,
-        hubHt, transportDist);
-    cost += transCost;
-    cost += engineeringCost(nTurb, farmSize);
-    cost += powerPerformanceCost(hubHt, permanent, temporary);
-    cost += siteCompoundCost(accessRoadEntrances, constructionTime, farmSize);
-    cost += buildingCost(buildingSize);
-    cost += transmissionCost(voltage, distInter, newSwitchyardRequired);
-    cost += developmentCost(developmentFee);
-    cost += accessRoadsCost(terrain, layout, nTurb, diameter, constructionTime, accessRoadEntrances);
-    double foundCost = foundationCost(rating, diameter, topMass, hubHt, soil, nTurb);
-    cost += foundCost;
-    cost += erectionCost(rating, hubHt, nTurb, weatherDelayDays, craneBreakdowns, deliveryAssistRequired);
-    cost += electricalMaterialsCost(terrain, layout, farmSize, diameter, nTurb, padMountTransformer, thermalBackfill);
-    cost += electricalInstallationCost(terrain, layout, farmSize, diameter, nTurb, rockTrenchingLength, overheadCollector);
-    cost += substationCost(voltage, farmSize);
-    cost += projectMgmtCost(constructionTime);
+	//finally, add turbine & transport cost
+	cost += transportationCost(tcc, rating, nTurb, hubHt, transportDist);
 
-
-    MultCost result;
-    result = insuranceMultiplierAndCost(tcc, farmSize, foundCost, performanceBond);
-    cost += result.cost;
-    alpha += result.alpha;
-
-    result = markupMultiplierAndCost(transCost, contingency, warranty, useTax, overhead, profitMargin);
-    cost += result.cost;
-    alpha += result.alpha;
-
-    // multiplier
-    cost /= (1.0 - alpha);
-
-    // remove TCC so only BOS is left
-    cost -= tcc * rating * nTurb;
-
-    return cost;
-
+	//return the total cost
+	return cost;
 }
 
 
