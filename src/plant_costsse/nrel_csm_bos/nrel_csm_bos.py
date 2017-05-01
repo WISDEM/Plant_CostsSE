@@ -210,7 +210,7 @@ class bos_csm_component(Component):
             self.d_transport_d_rating = ostTTransFactor  * ppi.compute('IPPI_TPT')
             ppi.ref_yr = 2003
             supportTrans        = ostSTransFactor  * self.machine_rating * ppi.compute('IPPI_OAI')
-            transportation_costs = self.turbTrans + self.supportTrans
+            transportation_costs = turbTrans + supportTrans
             self.d_transport_d_rating += ostSTransFactor  * ppi.compute('IPPI_OAI')
 
         elif (iDepth == 4):  # offshore deep
