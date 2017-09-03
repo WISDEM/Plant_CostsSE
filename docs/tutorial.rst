@@ -144,4 +144,35 @@ The results will vary depending on the configuration of the model but example re
 >>> and plant availability of 94.3%
 
 
+Tutorial for NREL_Land_BOSSE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+As an example of NREL_Land_BOSSE, let us simulate capital expenditures for a land-based wind plant.  
+
+The first step is to import the relevant files and set up the component.  
+
+.. literalinclude:: examples/example.py
+    :start-after: # 15 ---
+    :end-before: # 15 ---
+
+The plant capital expenditures model relies on some turbine as well as plant input parameters that must be specified.
+
+.. literalinclude:: examples/example.py
+    :start-after: # 16 ---
+    :end-before: # 16 ---
+
+We can now evaluate the plant capital expenditures.
+
+.. literalinclude:: examples/example.py
+    :start-after: # 17 ---
+    :end-before: # 17 ---
+
+We then print out the resulting cost values.
+
+.. literalinclude:: examples/example.py
+    :start-after: # 18 ---
+    :end-before: # 18 ---
+
+The results will vary depending on the configuration of the model but example results are provided here:
+
+>>> Balance of station costs are: $85393734.75 USD

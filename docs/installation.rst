@@ -32,6 +32,7 @@ To check if installation was successful try to import the module from within an 
 	> import plant_costsse.nrel_csm_bos.nrel_csm_bos
 	> import plant_costsse.nrel_csm_opex.nrel_csm_opex
 	> import plant_costsse.ecn_opex_offshore.ecn_opex_offshore
+	> import plant_costsse.nrel_land_bosse.NREL_Land_BOSSE
 
 Note that you must have the ECN Offshore OPEX model and license in order to use the latter module.  This software contains only the OpenMDAO wrapper for the model.
 
@@ -40,7 +41,10 @@ You may also run the unit tests which include functional and gradient tests.  An
 .. code-block:: bash
 
    $ python src/test/test_Plant_CostsSE.py
-
+   $ python src/test/test_land_bosse.py 
+   $ python src/test/test_land_bosse_openmdao.py
+   $ python src/test/test_land_bosse_gradients.py
+   
 An "OK" signifies that all the tests passed.
 
 If you have the ECN model, you may run the ECN test which checks for a non-zero value for operational expenditures.  You will likely need to modify the code for the ECN model based on the version you have and its particular configuration.

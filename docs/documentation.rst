@@ -53,6 +53,42 @@ Referenced PPI Index Models (via commonse.config)
 .. module:: commonse.csmPPI
 .. class:: PPI
 
+.. currentmodule:: plant_costsse.nrel_land_bosse.nrel_land_bosse
+
+Documentation for NREL_Land_BOSSE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The following inputs and outputs are defined for NREL_Land_BOSSE:
+
+.. literalinclude:: ../src/plant_costsse/nrel_land_bosse/nrel_land_bosse.py
+    :language: python
+    :start-after: NREL_Land_BOSSE(Assembly)
+    :end-before: def __init__(self, ssfile=None)
+    :prepend: class NREL_Land_BOSSE(Assembly):
+
+Referenced Land BOS Modules
+===========================================
+.. module:: plant_costsse.nrel_land_bosse.nrel_land_bosse
+.. class:: Enum2Int
+.. class:: FarmSize
+.. class:: Defaults
+.. class:: Transportation
+.. class:: Engineering
+.. class:: PowerPerformance
+.. class:: AccessRoads
+.. class:: SiteCompound
+.. class:: Building
+.. class:: Foundations
+.. class:: Erection
+.. class:: ElecMaterials
+.. class:: ElecInstallation
+.. class:: Substation
+.. class:: Transmission
+.. class:: ProjectMgmt
+.. class:: Development
+.. class:: Insurance
+.. class:: Markup
+.. class:: Total
+
 
 .. currentmodule:: plant_costsse.ecn_offshore_opex.ecn_offshore_opex
 

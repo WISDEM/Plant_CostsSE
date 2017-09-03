@@ -127,3 +127,34 @@ print "and plant availability of {:.1f}% ".format(om2.availability*100.0)
 print
 
 # 14 ----------
+# 15 ----------
+from plant_costsse.nrel_land_bosse.nrel_land_bosse import NREL_Land_BOSSE
+
+bos = NREL_Land_BOSSE()
+
+# 15 ----------
+# 16 ----------
+
+bos.machine_rating = 2000
+bos.rotor_diameter = 110
+bos.hub_height = 100
+bos.turbine_number = 100
+bos.voltage = 137
+bos.distInter = 5
+bos.terrain = 'FLAT_TO_ROLLING'
+bos.layout = 'COMPLEX'
+bos.soil = 'STANDARD'
+bos.turbine_cost = 1000.0 * bos.machine_rating
+bos.RNA_mass = 88.0 *1000
+
+# 16 ----------
+# 17 ----------
+
+bos.run()
+
+
+# 17 ----------
+# 18 ----------
+print "Balance of station costs are: ${:.2f} USD".format(bos.bos_costs)
+
+# 18 ----------
