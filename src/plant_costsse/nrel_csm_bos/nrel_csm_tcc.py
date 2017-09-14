@@ -4,33 +4,13 @@ tcc_csm.py
 Created by NWTC Systems Engineering Sub-Task on 2012-08-01.
 Copyright (c) NREL. All rights reserved.
 """
-
 from fused_wind import FUSED_Object , FUSED_OpenMDAO , fusedvar
-from fused_wind import create_interface , set_output, set_input
+from windio_plant_costs import fifc_tcc_costs
 
 from openmdao.api import IndepVarComp, Component, Problem, Group
 
 from config import *
 import numpy as np
-
-
-## Turbine Cost
-# turbine costs
-turbine_cost = {'name': 'turbine_cost', 'type': float, 'val': 0.0}
-
-# turbine cost model description (basic)
-machine_rating =  { 'name': 'machine_rating' , 'type': float, 'val': 0.0 }
-rotor_diameter =  { 'name': 'rotor_diameter' , 'type': float, 'val': 0.0 }
-hub_height =  { 'name': 'hub_height' , 'type': float, 'val': 0.0 }
-blade_number = { 'name': 'blade_number', 'type': int, 'val': 3}
-
-# turbine cost 
-fifc_tcc_costs = create_interface()
-set_output(fifc_tcc_costs, turbine_cost)
-set_input(fifc_bos_costs, machine_rating)
-set_input(fifc_bos_costs, rotor_diameter)
-set_input(fifc_bos_costs, hub_height)
-set_input(fifc_tcc_costs, blade_number)
 
 ##### Rotor
 
@@ -920,17 +900,17 @@ class tcc_csm_fused(FUSED_Object):
         # Add model specific inputs
         self.add_input(**fusedvar('rotor_thrust',0.0))
         self.add_input(**fusedvar('rotor_torque',0.0)) 
-        self.add_input(**fusedvar('year',0.0)) 
-        self.add_input(**fusedvar('month',0.0))
+        self.add_input(**fusedvar('year',2009)) 
+        self.add_input(**fusedvar('month',12))
 
         # Add model specific outputs
         self.add_output(**fusedvar('rotor_cost',0.0))
         self.add_output(**fusedvar('rotor_mass',0.0)) 
         self.add_output(**fusedvar('turbine_mass',0.0)) 
 
-    def compute(self, inputs, outputs):
+        self.tcc = tcc_csm()
 
-        tcc = tcc_csm()
+    def compute(self, inputs, outputs):
 
         machine_rating = inputs['machine_rating']
         rotor_diameter = inputs['rotor_diameter']
@@ -941,16 +921,15 @@ class tcc_csm_fused(FUSED_Object):
         year = inputs['year']
         month = inputs['month']
 
-
-        tcc.compute(rotor_diameter, machine_rating, hub_height, rotor_thrust, rotor_torque, \
+        self.tcc.compute(rotor_diameter, machine_rating, hub_height, rotor_thrust, rotor_torque, \
                 year, month, blade_number, self.offshore, self.advanced_blade, self.drivetrain_design, \
                 self.crane, self.advanced_bedplate, self.advanced_tower)
 
         # Outputs
-        outputs['turbine_cost'] = tcc.turbine_cost 
-        outputs['turbine_mass'] = tcc.turbine_mass
-        outputs['rotor_cost'] = tcc.rotor_cost
-        outputs['rotor_mass'] = tcc.rotor_mass
+        outputs['turbine_cost'] = self.tcc.turbine_cost 
+        outputs['turbine_mass'] = self.tcc.turbine_mass
+        outputs['rotor_cost'] = self.tcc.rotor_cost
+        outputs['rotor_mass'] = self.tcc.rotor_mass
         
         return outputs
 
@@ -963,7 +942,6 @@ def example_turbine():
     prob.setup()
 
     # simple test of module
-    tcc = tcc_csm()
     prob['rotor_diameter'] = 126.0
     prob['blade_number'] = 3
     prob['hub_height'] = 90.0    
@@ -976,20 +954,19 @@ def example_turbine():
     thrustCoeff = 0.50
     airDensity = 1.225
 
-    ratedHubPower  = machine_rating / maxEfficiency 
-    rotorSpeed     = (maxTipSpd/(0.5*rotor_diameter)) * (60.0 / (2*np.pi))
-    prob['rotor_thrust']  = airDensity * thrustCoeff * np.pi * rotor_diameter**2 * (ratedWindSpd**2) / 8
+    ratedHubPower  = prob['machine_rating'] / maxEfficiency 
+    rotorSpeed     = (maxTipSpd/(0.5*prob['rotor_diameter'])) * (60.0 / (2*np.pi))
+    prob['rotor_thrust']  = airDensity * thrustCoeff * np.pi * prob['rotor_diameter']**2 * (ratedWindSpd**2) / 8
     prob['rotor_torque'] = ratedHubPower/(rotorSpeed*(np.pi/30))*1000
+    
+    prob['year'] = 2009
+    prob['month'] = 12
 
-    tcc.compute(rotor_diameter, machine_rating, hub_height, rotor_thrust, rotor_torque, \
-                year, month, blade_number, offshore, advanced_blade, drivetrain_design, \
-                crane, advanced_bedplate, advanced_tower)
+    prob.run()
     
     print("The results for the NREL 5 MW Reference Turbine in an offshore 20 m water depth location are:")
     for io in root.unknowns:
         print(io + ' ' + str(root.unknowns[io]))
-
-
 
 if __name__ == "__main__":
 
