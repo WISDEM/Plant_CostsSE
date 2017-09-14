@@ -4,35 +4,13 @@ bos_csm_component.py
 Created by NWTC Systems Engineering Sub-Task on 2012-08-01.
 Copyright (c) NREL. All rights reserved.
 """
-from fused_wind import create_interface , FUSED_Object , FUSED_OpenMDAO , set_output, set_input, fusedvar
+from fused_wind import FUSED_Object , FUSED_OpenMDAO , fusedvar
+from windio_plant_costs import fifc_bos_costs
 
 from openmdao.api import IndepVarComp, Component, Problem, Group
 
 from config import *
 import numpy as np
-
-### Wind IO content (in windio - as yaml and in FUSED-Wind (or windio) as python dictionary translation)
-# plant costs
-bos_costs =  { 'name': 'bos_costs' , 'type': int, 'val': 1 }
-
-# plant cost model description (basic)
-machine_rating =  { 'name': 'machine_rating' , 'type': int, 'val': 1 }
-rotor_diameter =  { 'name': 'rotor_diameter' , 'type': int, 'val': 1 }
-hub_height =  { 'name': 'hub_height' , 'type': int, 'val': 1 }
-RNA_mass =  { 'name': 'RNA_mass' , 'type': int, 'val': 1 }
-turbine_cost =  { 'name': 'turbine_cost' , 'type': int, 'val': 1 }
-turbine_number =  { 'name': 'turbine_number' , 'type': int, 'val': 1 }
-
-### FUSED-interface content (in FUSED-Wind)
-# bos_costs
-fifc_bos_costs = create_interface()
-set_output(fifc_bos_costs, bos_costs)
-set_input(fifc_bos_costs, machine_rating)
-set_input(fifc_bos_costs, rotor_diameter)
-set_input(fifc_bos_costs, hub_height)
-set_input(fifc_bos_costs, RNA_mass)
-set_input(fifc_bos_costs, turbine_cost)
-set_input(fifc_bos_costs, turbine_number)
 
 ### FUSED-wrapper file (in WISDEM/Plant_CostsSE)
 class bos_csm_fused(FUSED_Object):
@@ -59,9 +37,9 @@ class bos_csm_fused(FUSED_Object):
         self.add_output(**fusedvar('bos_breakdown_soft_costs',0.0)) # = Float(desc='Contingencies, bonds, reserves, decommissioning, profits, and construction financing costs')
         self.add_output(**fusedvar('bos_breakdown_other_costs',0.0)) # = Float(desc='Bucket for any other costs not captured above')
 
-    def compute(self, inputs, outputs):
+        self.bos = bos_csm()
 
-        bos = bos_csm()
+    def compute(self, inputs, outputs):
 
         machine_rating = inputs['machine_rating']
         rotor_diameter = inputs['rotor_diameter']
@@ -75,20 +53,20 @@ class bos_csm_fused(FUSED_Object):
         month = inputs['month']
         multiplier = inputs['multiplier']
 
-        bos.compute(machine_rating, rotor_diameter, hub_height, RNA_mass, turbine_cost, turbine_number, sea_depth, year, month, multiplier)
+        self.bos.compute(machine_rating, rotor_diameter, hub_height, RNA_mass, turbine_cost, turbine_number, sea_depth, year, month, multiplier)
 
-        print(bos.bos_costs)
+        print(self.bos.bos_costs)
         # Outputs
-        outputs['bos_costs'] = bos.bos_costs #  = Float(iotype='out', desc='Overall wind plant balance of station/system costs up to point of comissioning')
+        outputs['bos_costs'] = self.bos.bos_costs #  = Float(iotype='out', desc='Overall wind plant balance of station/system costs up to point of comissioning')
         #self.add_output(bos_breakdown = VarTree(BOSVarTree(), iotype='out', desc='BOS cost breakdown')
-        outputs['bos_breakdown_development_costs'] = bos.bos_breakdown_development_costs #  = Float(desc='Overall wind plant balance of station/system costs up to point of comissioning')
-        outputs['bos_breakdown_preparation_and_staging_costs'] = bos.bos_breakdown_preparation_and_staging_costs #  = Float(desc='Site preparation and staging')
-        outputs['bos_breakdown_transportation_costs'] = bos.bos_breakdown_transportation_costs #  = Float(desc='Any transportation costs to site / staging site') #BOS or turbine cost?
-        outputs['bos_breakdown_foundation_and_substructure_costs'] = bos.bos_breakdown_foundation_and_substructure_costs # Float(desc='Foundation and substructure costs')
-        outputs['bos_breakdown_electrical_costs'] = bos.bos_breakdown_electrical_costs # Float(desc='Collection system, substation, transmission and interconnect costs')
-        outputs['bos_breakdown_assembly_and_installation_costs'] = bos.bos_breakdown_assembly_and_installation_costs # Float(desc='Assembly and installation costs')
-        outputs['bos_breakdown_soft_costs'] = bos.bos_breakdown_soft_costs  # = Float(desc='Contingencies, bonds, reserves, decommissioning, profits, and construction financing costs')
-        outputs['bos_breakdown_other_costs'] = bos.bos_breakdown_other_costs # = Float(desc='Bucket for any other costs not captured above')
+        outputs['bos_breakdown_development_costs'] = self.bos.bos_breakdown_development_costs #  = Float(desc='Overall wind plant balance of station/system costs up to point of comissioning')
+        outputs['bos_breakdown_preparation_and_staging_costs'] = self.bos.bos_breakdown_preparation_and_staging_costs #  = Float(desc='Site preparation and staging')
+        outputs['bos_breakdown_transportation_costs'] = self.bos.bos_breakdown_transportation_costs #  = Float(desc='Any transportation costs to site / staging site') #BOS or turbine cost?
+        outputs['bos_breakdown_foundation_and_substructure_costs'] = self.bos.bos_breakdown_foundation_and_substructure_costs # Float(desc='Foundation and substructure costs')
+        outputs['bos_breakdown_electrical_costs'] = self.bos.bos_breakdown_electrical_costs # Float(desc='Collection system, substation, transmission and interconnect costs')
+        outputs['bos_breakdown_assembly_and_installation_costs'] = self.bos.bos_breakdown_assembly_and_installation_costs # Float(desc='Assembly and installation costs')
+        outputs['bos_breakdown_soft_costs'] = self.bos.bos_breakdown_soft_costs  # = Float(desc='Contingencies, bonds, reserves, decommissioning, profits, and construction financing costs')
+        outputs['bos_breakdown_other_costs'] = self.bos.bos_breakdown_other_costs # = Float(desc='Bucket for any other costs not captured above')
 
         return outputs
 
