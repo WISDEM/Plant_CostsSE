@@ -1,54 +1,67 @@
 """
-tcc_csm_component.py
+tcc_csm.py
 
 Created by NWTC Systems Engineering Sub-Task on 2012-08-01.
 Copyright (c) NREL. All rights reserved.
 """
 
+from fused_wind import FUSED_Object , FUSED_OpenMDAO , fusedvar
+from fused_wind import create_interface , set_output, set_input
+
+from openmdao.api import IndepVarComp, Component, Problem, Group
+
+from config import *
 import numpy as np
 
-from openmdao.main.api import Component, Assembly, set_as_top, VariableTree
-from openmdao.main.datatypes.api import Int, Bool, Float, Array, VarTree, Enum
 
-from commonse.config import *
+## Turbine Cost
+# turbine costs
+turbine_cost = {'name': 'turbine_cost', 'type': float, 'val': 0.0}
 
-from fusedwind.plant_cost.fused_tcc import BaseTurbineCostModel, BaseTCCAggregator, configure_base_tcc
-from fusedwind.interface import implement_base
+# turbine cost model description (basic)
+machine_rating =  { 'name': 'machine_rating' , 'type': float, 'val': 0.0 }
+rotor_diameter =  { 'name': 'rotor_diameter' , 'type': float, 'val': 0.0 }
+hub_height =  { 'name': 'hub_height' , 'type': float, 'val': 0.0 }
+blade_number = { 'name': 'blade_number', 'type': int, 'val': 3}
+
+# turbine cost 
+fifc_tcc_costs = create_interface()
+set_output(fifc_tcc_costs, turbine_cost)
+set_input(fifc_bos_costs, machine_rating)
+set_input(fifc_bos_costs, rotor_diameter)
+set_input(fifc_bos_costs, hub_height)
+set_input(fifc_tcc_costs, blade_number)
 
 ##### Rotor
 
-class blades_csm_component(Component):
+class blades_csm(object):
     """
-       Component to wrap python code for NREL cost and scaling model for a wind turbine blade
+       object to wrap python code for NREL cost and scaling model for a wind turbine blade
     """
-    
-    # Variables
-    rotor_diameter = Float(126.0, units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
-    
-    # Parameters
-    year = Int(2009, iotype='in', desc = 'year of project start')
-    month = Int(12, iotype='in', desc = 'month of project start')
-    advanced_blade = Bool(False, iotype='in', desc = 'boolean for use of advanced blade curve')
-
-    # Outputs
-    blade_cost = Float(0.0, units='USD', iotype='out', desc='cost for a single wind turbine blade')
-    blade_mass = Float(0.0, units='kg', iotype='out', desc='mass for a single wind turbine blade')
 
     def __init__(self):
         """
-        OpenMDAO component to wrap blade model of the NREL _cost and Scaling Model (csmBlades.py)
+        OpenMDAO object to wrap blade model of the NREL _cost and Scaling Model (csmBlades.py)
         
         """
-        super(blades_csm_component, self).__init__()
+        super(blades_csm, self).__init__()
+        
+        # Outputs
+        self.blade_cost = 0.0 # Float(0.0, units='USD', iotype='out', desc='cost for a single wind turbine blade')
+        self.blade_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc='mass for a single wind turbine blade')
 
-        #controls what happens if derivatives are missing
-        self.missing_deriv_policy = 'assume_zero'
-
-    def execute(self):
+    def compute(self, rotor_diameter, year=2009, month=12, advanced_blade=False):
         """
-        Executes Blade model of the NREL _cost and Scaling Model to estimate wind turbine blade cost and mass.
+        computes Blade model of the NREL _cost and Scaling Model to estimate wind turbine blade cost and mass.
         """
 
+        # Variables
+        self.rotor_diameter = rotor_diameter # = Float(126.0, units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
+        
+        # Parameters
+        self.year = year # = Int(2009, iotype='in', desc = 'year of project start')
+        self.month = month # Int(12, iotype='in', desc = 'month of project start')
+        self.advanced_blade = advanced_blade # Bool(False, iotype='in', desc = 'boolean for use of advanced blade curve')
 
         if (self.advanced_blade == True):
             massCoeff = 0.4948
@@ -90,84 +103,52 @@ class blades_csm_component(Component):
  
     def list_deriv_vars(self):
 
-    	  inputs = ['rotor_diameter']
-    	  outputs = ['blade_mass', 'blade_cost']
-    	  
-    	  return inputs, outputs
+        inputs = ['rotor_diameter']
+        outputs = ['blade_mass', 'blade_cost']
+        
+        return inputs, outputs
     
     def provideJ(self):
-    	  
-    	  self.J = np.array([[self.d_mass_d_diameter],[self.d_cost_d_diameter]])    	
-    	  
-    	  return self.J
-         
-#-----------------------------------------------------------------
-
-def example_blade():
-  
-    # simple test of module
-
-    blades = blades_csm_component()
         
-    # First test
-    blades.rotor_diameter = 126.0
-    blades.advanced_blade = False
-    blades.year = 2009
-    blades.month = 12
-    
-    blades.execute()
-    
-    print "Blade csm component"
-    print "Blade mass: {0}".format(blades.blade_mass)
-    print "Blade cost: {0}".format(blades.blade_cost)
+        self.J = np.array([[self.d_mass_d_diameter],[self.d_cost_d_diameter]])      
+        
+        return self.J
 
-    blades.advanced_blade = True
 
-    blades.execute()
-    
-    print "Blade csm component, advanced blade"
-    print "Blade mass: {0}".format(blades.blade_mass)
-    print "Blade cost: {0}".format(blades.blade_cost)
-
-class hub_csm_component(Component):
+class hub_csm(object):
     """
-       Component to wrap python code for NREL cost and scaling model for a wind turbine hub
+       object to wrap python code for NREL cost and scaling model for a wind turbine hub
     """
-
-    # Variables
-    rotor_diameter = Float(126.0, units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
-    blade_mass = Float(17650.67, units='kg', iotype='in', desc='mass of an individual blade')
-    
-    # Parameters
-    year = Int(2009, iotype='in', desc = 'year of project start')
-    month = Int(12, iotype='in', desc = 'month of project start')
-    blade_number = Int(3, iotype='in', desc= 'number of rotor blades')
-
-    # Outputs
-    hub_system_cost = Float(0.0, units='USD', iotype='out', desc='hub system cost')
-    hub_system_mass = Float(0.0, units='kg', iotype='out', desc='hub system mass')
-    hub_cost = Float(0.0, units='USD', iotype='out', desc='hub cost')
-    hub_mass = Float(0.0, units='kg', iotype='out', desc='hub mass')
-    pitch_system_cost = Float(0.0, units='USD', iotype='out', desc='pitch system cost')
-    pitch_system_mass = Float(0.0, units='kg', iotype='out', desc='pitch system mass')
-    spinner_cost = Float(0.0, units='USD', iotype='out', desc='spinner / nose cone cost')
-    spinner_mass = Float(0.0, units='kg', iotype='out', desc='spinner / nose cone mass')
 
     def __init__(self):
         """
-        OpenMDAO component to wrap hub model of the NREL _cost and Scaling Model (csmHub.py)  
+        OpenMDAO object to wrap hub model of the NREL _cost and Scaling Model (csmHub.py)  
+        """
+        super(hub_csm, self).__init__()
+
+        # Outputs
+        self.hub_system_cost = 0.0 #Float(0.0, units='USD', iotype='out', desc='hub system cost')
+        self.hub_system_mass = 0.0 #Float(0.0, units='kg', iotype='out', desc='hub system mass')
+        self.hub_cost = 0.0 #Float(0.0, units='USD', iotype='out', desc='hub cost')
+        self.hub_mass = 0.0 #Float(0.0, units='kg', iotype='out', desc='hub mass')
+        self.pitch_system_cost = 0.0 #Float(0.0, units='USD', iotype='out', desc='pitch system cost')
+        self.pitch_system_mass = 0.0 #Float(0.0, units='kg', iotype='out', desc='pitch system mass')
+        self.spinner_cost = 0.0 #Float(0.0, units='USD', iotype='out', desc='spinner / nose cone cost')
+        self.spinner_mass = 0.0 #Float(0.0, units='kg', iotype='out', desc='spinner / nose cone mass')
+
+    def compute(self, rotor_diameter, blade_mass, year=2009, month=12, blade_number=3):
+        """
+        computes hub model of the NREL _cost and Scaling model to compute hub system object masses and costs.
         """
 
-        super(hub_csm_component, self).__init__()
-
-        #controls what happens if derivatives are missing
-        self.missing_deriv_policy = 'assume_zero'
-
-    def execute(self):
-        """
-        Executes hub model of the NREL _cost and Scaling model to compute hub system component masses and costs.
-        """
-
+        # Variables
+        self.rotor_diameter = rotor_diameter #Float(126.0, units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
+        self.blade_mass = blade_mass #Float(17650.67, units='kg', iotype='in', desc='mass of an individual blade')
+        
+        # Parameters
+        self.year = year #Int(2009, iotype='in', desc = 'year of project start')
+        self.month = month #Int(12, iotype='in', desc = 'month of project start')
+        self.blade_number = blade_number #Int(3, iotype='in', desc= 'number of rotor blades')
 
         #*** Pitch bearing and mechanism
         pitchBearingMass = 0.1295 * self.blade_mass*self.blade_number + 491.31  # slope*BldMass3 + int
@@ -243,99 +224,70 @@ class hub_csm_component(Component):
                            [self.d_system_cost_d_diameter, self.d_system_cost_d_blade_mass]])
         
         return self.J
-        
-#-----------------------------------------------------------------
-
-def example_hub():
-
-    # simple test of module
-
-    hub = hub_csm_component()
-        
-    # First test
-    hub.blade_mass = 25614.377
-    hub.rotor_diameter = 126.0
-    hub.blade_number = 3
-    hub.year = 2009
-    hub.month = 12
-    
-    hub.execute()
-    
-    print "Hub csm component"
-    print "Hub system mass: {0}".format(hub.hub_system_mass)
-    print "Hub mass: {0}".format(hub.hub_mass)
-    print "pitch system mass: {0}".format(hub.pitch_system_mass)
-    print "spinner mass: {0}".format(hub.spinner_mass)
-    print "Hub system cost: {0}".format(hub.hub_system_cost)
 
 
 ##### Nacelle
 
-class nacelle_csm_component(Component):
+class nacelle_csm(object):
     """
-       Component to wrap python code for NREL cost and scaling model for a wind turbine nacelle
+       object to wrap python code for NREL cost and scaling model for a wind turbine nacelle
     """
-
-    # Variables
-    rotor_diameter = Float(126.0, units='m', iotype='in', desc = 'diameter of the rotor')
-    rotor_mass = Float(123193.3010, iotype='in', units='kg', desc = 'mass of rotor including blades and hub')
-    rotor_thrust = Float(500930.0837, iotype='in', units='N', desc='maximum thurst from rotor')    
-    rotor_torque = Float(4365248.7375, iotype='in', units='N * m', desc = 'torque from rotor at rated power')
-    machine_rating = Float(5000.0, units='kW', iotype='in', desc = 'Machine rated power')
-
-    # Parameters
-    drivetrain_design = Enum('geared', ('geared', 'single_stage', 'multi_drive', 'pm_direct_drive'), iotype='in')
-    crane = Bool(True, iotype='in', desc = 'boolean for presence of a service crane up tower')
-    advanced_bedplate = Int(0, iotype='in', desc= 'indicator for drivetrain bedplate design 0 - conventional')   
-    year = Int(2009, iotype='in', desc = 'year of project start')
-    month = Int(12, iotype='in', desc = 'month of project start')
-    offshore = Bool(True, iotype='in', desc = 'boolean for land or offshore wind project')
-
-    # Outputs
-    nacelle_mass = Float(0.0, units='kg', iotype='out', desc='nacelle mass')
-    lowSpeedShaft_mass = Float(0.0, units='kg', iotype='out', desc= 'low speed shaft mass')
-    bearings_mass = Float(0.0, units='kg', iotype='out', desc= 'bearings system mass')
-    gearbox_mass = Float(0.0, units='kg', iotype='out', desc= 'gearbox and housing mass')
-    mechanicalBrakes_mass = Float(0.0, units='kg', iotype='out', desc= 'high speed shaft, coupling, and mechanical brakes mass')
-    generator_mass = Float(0.0, units='kg', iotype='out', desc= 'generator and housing mass')
-    VSElectronics_mass = Float(0.0, units='kg', iotype='out', desc= 'variable speed electronics mass')
-    yawSystem_mass = Float(0.0, units='kg', iotype='out', desc= 'yaw system mass')
-    mainframeTotal_mass = Float(0.0, units='kg', iotype='out', desc= 'mainframe total mass including bedplate')
-    electronicCabling_mass = Float(0.0, units='kg', iotype='out', desc= 'electronic cabling mass')
-    HVAC_mass = Float(0.0, units='kg', iotype='out', desc= 'HVAC system mass')
-    nacelleCover_mass = Float(0.0, units='kg', iotype='out', desc= 'nacelle cover mass')
-    controls_mass = Float(0.0, units='kg', iotype='out', desc= 'control system mass')
-
-    nacelle_cost = Float(0.0, units='USD', iotype='out', desc='nacelle cost')
-    lowSpeedShaft_cost = Float(0.0, units='kg', iotype='out', desc= 'low speed shaft _cost')
-    bearings_cost = Float(0.0, units='kg', iotype='out', desc= 'bearings system _cost')
-    gearbox_cost = Float(0.0, units='kg', iotype='out', desc= 'gearbox and housing _cost')
-    mechanicalBrakes_cost = Float(0.0, units='kg', iotype='out', desc= 'high speed shaft, coupling, and mechanical brakes _cost')
-    generator_cost = Float(0.0, units='kg', iotype='out', desc= 'generator and housing _cost')
-    VSElectronics_cost = Float(0.0, units='kg', iotype='out', desc= 'variable speed electronics _cost')
-    yawSystem_cost = Float(0.0, units='kg', iotype='out', desc= 'yaw system _cost')
-    mainframeTotal_cost = Float(0.0, units='kg', iotype='out', desc= 'mainframe total _cost including bedplate')
-    electronicCabling_cost = Float(0.0, units='kg', iotype='out', desc= 'electronic cabling _cost')
-    HVAC_cost = Float(0.0, units='kg', iotype='out', desc= 'HVAC system _cost')
-    nacelleCover_cost = Float(0.0, units='kg', iotype='out', desc= 'nacelle cover _cost')
-    controls_cost = Float(0.0, units='kg', iotype='out', desc= 'control system _cost')
 
     def __init__(self):
         """
-        OpenMDAO component to wrap nacelle mass-cost model based on the NREL _cost and Scaling model data (csmNacelle.py).             
+        OpenMDAO object to wrap nacelle mass-cost model based on the NREL _cost and Scaling model data (csmNacelle.py).             
+        """
+        super(nacelle_csm, self).__init__()
+
+        # Outputs
+        self.nacelle_mass = 0.0 #Float(0.0, units='kg', iotype='out', desc='nacelle mass')
+        self.lowSpeedShaft_mass = 0.0 #Float(0.0, units='kg', iotype='out', desc= 'low speed shaft mass')
+        self.bearings_mass = 0.0 #Float(0.0, units='kg', iotype='out', desc= 'bearings system mass')
+        self.gearbox_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'gearbox and housing mass')
+        self.mechanicalBrakes_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'high speed shaft, coupling, and mechanical brakes mass')
+        self.generator_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'generator and housing mass')
+        self.VSElectronics_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'variable speed electronics mass')
+        self.yawSystem_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'yaw system mass')
+        self.mainframeTotal_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'mainframe total mass including bedplate')
+        self.electronicCabling_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'electronic cabling mass')
+        self.HVAC_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'HVAC system mass')
+        self.nacelleCover_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'nacelle cover mass')
+        self.controls_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'control system mass')
+    
+        self.nacelle_cost = 0.0 # Float(0.0, units='USD', iotype='out', desc='nacelle cost')
+        self.lowSpeedShaft_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'low speed shaft _cost')
+        self.bearings_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'bearings system _cost')
+        self.gearbox_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'gearbox and housing _cost')
+        self.mechanicalBrakes_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'high speed shaft, coupling, and mechanical brakes _cost')
+        self.generator_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'generator and housing _cost')
+        self.VSElectronics_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'variable speed electronics _cost')
+        self.yawSystem_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'yaw system _cost')
+        self.mainframeTotal_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'mainframe total _cost including bedplate')
+        self.electronicCabling_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'electronic cabling _cost')
+        self.HVAC_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'HVAC system _cost')
+        self.nacelleCover_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'nacelle cover _cost')
+        self.controls_cost = 0.0 # Float(0.0, units='kg', iotype='out', desc= 'control system _cost')
+
+    def compute(self, rotor_diameter, rotor_mass, rotor_thrust, rotor_torque, machine_rating, drivetrain_design='geared', \
+                crane=True, advanced_bedplate=0, year=2009, month=12, offshore=True):
+        """
+        compute nacelle model of the NREL _cost and Scaling Model.
         """
 
-        super(nacelle_csm_component, self).__init__()
-
-        #controls what happens if derivatives are missing
-        self.missing_deriv_policy = 'assume_zero'
-
-    def execute(self):
-        """
-        Execute nacelle model of the NREL _cost and Scaling Model.
-        """
-
-
+        # Variables
+        self.rotor_diameter = rotor_diameter # = Float(126.0, units='m', iotype='in', desc = 'diameter of the rotor')
+        self.rotor_mass = rotor_mass # Float(123193.3010, iotype='in', units='kg', desc = 'mass of rotor including blades and hub')
+        self.rotor_thrust = rotor_thrust #Float(500930.0837, iotype='in', units='N', desc='maximum thurst from rotor')    
+        self.rotor_torque = rotor_torque #Float(4365248.7375, iotype='in', units='N * m', desc = 'torque from rotor at rated power')
+        self.machine_rating = machine_rating #Float(5000.0, units='kW', iotype='in', desc = 'Machine rated power')
+    
+        # Parameters
+        self.drivetrain_design = drivetrain_design #Enum('geared', ('geared', 'single_stage', 'multi_drive', 'pm_direct_drive'), iotype='in')
+        self.crane = crane #Bool(True, iotype='in', desc = 'boolean for presence of a service crane up tower')
+        self.advanced_bedplate = advanced_bedplate #Int(0, iotype='in', desc= 'indicator for drivetrain bedplate design 0 - conventional')   
+        self.year = year #Int(2009, iotype='in', desc = 'year of project start')
+        self.month = month #Int(12, iotype='in', desc = 'month of project start')
+        self.offshore = offshore #Bool(True, iotype='in', desc = 'boolean for land or offshore wind project')
 
         # basic variable initialization        
         if self.offshore == False:
@@ -700,95 +652,38 @@ class nacelle_csm_component(Component):
                            [0.0, 0.0, 0.0, 0.0, 0.0]])
     
         return self.J
-       
-#-----------------------------------------------------------------
-
-def example_nacelle():
-
-    # simple test of module
-
-    nac = nacelle_csm_component()
-        
-    # First test
-    nac.rotor_diameter = 126.0
-    nac.machine_rating = 5000.0
-    nac.rotor_mass = 123193.30
-    #nac.max_rotor_speed = 12.12609
-    nac.rotor_thrust = 500930.1
-    nac.rotor_torque = 4365249
-    nac.drivetrain_design = 'geared'
-    nac.offshore = True
-    nac.crane=True
-    nac.advanced_bedplate=0
-    nac.year = 2009
-    nac.month = 12
-    
-    nac.execute()
-    
-    print "Nacelle csm component"
-    print "Nacelle mass: {0}".format(nac.nacelle_mass)
-    print   
-    print "lss mass: {0}".format(nac.lowSpeedShaft_mass)
-    print "bearings mass: {0}".format(nac.bearings_mass)
-    print "gearbox mass: {0}".format(nac.gearbox_mass)
-    print "mechanical brake mass: {0}".format(nac.mechanicalBrakes_mass)
-    print "generator mass: {0}".format(nac.generator_mass)
-    print "yaw system mass: {0}".format(nac.yawSystem_mass)
-    print "mainframe total mass: {0}".format(nac.mainframeTotal_mass)
-    print "econnections total mass: {0}".format(nac.electronicCabling_mass)
-    print "hvac mass: {0}".format(nac.HVAC_mass)
-    print "nacelle cover mass: {0}".format(nac.nacelleCover_mass)
-    print "controls mass: {0}".format(nac.controls_mass)
-    print
-    print "Nacelle cost: {0}".format(nac.nacelle_cost)
-    print   
-    print "lss _cost: {0}".format(nac.lowSpeedShaft_cost)
-    print "bearings _cost: {0}".format(nac.bearings_cost)
-    print "gearbox _cost: {0}".format(nac.gearbox_cost)
-    print "mechanical brake _cost: {0}".format(nac.mechanicalBrakes_cost)
-    print "generator _cost: {0}".format(nac.generator_cost)
-    print "yaw system _cost: {0}".format(nac.yawSystem_cost)
-    print "mainframe total _cost: {0}".format(nac.mainframeTotal_cost)
-    print "econnections total cost: {0}".format(nac.electronicCabling_cost)
-    print "hvac cost: {0}".format(nac.HVAC_cost)
-    print "nacelle cover cost: {0}".format(nac.nacelleCover_cost)
-    print "controls cost: {0}".format(nac.controls_cost)
 
 
 ##### Tower
 
-class tower_csm_component(Component):
+class tower_csm(object):
     """
-       Component to wrap python code for NREL cost and scaling model for a wind turbine tower
+       object to wrap python code for NREL cost and scaling model for a wind turbine tower
     """
-    
-    # Variables
-    rotor_diameter = Float(126.0, units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
-    hub_height = Float(90.0, units = 'm', iotype='in', desc = 'hub height of machine')
-    
-    # Parameters
-    year = Int(2009, iotype='in', desc = 'year of project start')
-    month = Int(12, iotype='in', desc = 'month of project start')
-    advanced_tower = Bool(False, iotype='in', desc = 'advanced tower configuration')
-
-    # Outputs 
-    tower_cost = Float(0.0, units='USD', iotype='out', desc='cost for a tower')
-    tower_mass = Float(0.0, units='kg', iotype='out', desc='mass for a turbine tower')
 
     def __init__(self):
         """
-        OpenMDAO component to wrap tower model based of the NREL _cost and Scaling Model data (csmTower.py).     
+        OpenMDAO object to wrap tower model based of the NREL _cost and Scaling Model data (csmTower.py).     
         """        
+        super(tower_csm, self).__init__()
 
-        super(tower_csm_component, self).__init__()
+        # Outputs 
+        self.tower_cost = 0.0 # Float(0.0, units='USD', iotype='out', desc='cost for a tower')
+        self.tower_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc='mass for a turbine tower')
 
-        #controls what happens if derivatives are missing
-        self.missing_deriv_policy = 'assume_zero'
-
-    def execute(self):
+    def compute(self, rotor_diameter, hub_height, year=2009, month=12, advanced_tower=False):
         """
-        Executes the tower model of the NREL _cost and Scaling Model.
+        computes the tower model of the NREL _cost and Scaling Model.
         """
+
+        # Variables
+        self.rotor_diameter = rotor_diameter #Float(126.0, units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
+        self.hub_height = hub_height #Float(90.0, units = 'm', iotype='in', desc = 'hub height of machine')
+        
+        # Parameters
+        self.year = year #Int(2009, iotype='in', desc = 'year of project start')
+        self.month = month #Int(12, iotype='in', desc = 'month of project start')
+        self.advanced_tower = advanced_tower #Bool(False, iotype='in', desc = 'advanced tower configuration')
 
         windpactMassSlope = 0.397251147546925
         windpactMassInt   = -1414.381881
@@ -827,53 +722,29 @@ class tower_csm_component(Component):
         self.J = np.array([[self.d_mass_d_diameter, self.d_mass_d_hheight], [self.d_cost_d_diameter, self.d_cost_d_hheight]])
         
         return self.J        
-          
-#-----------------------------------------------------------------
-
-def example_tower():
-
-    # simple test of module
-
-    tower = tower_csm_component()
-        
-    # First test
-    tower.rotor_diameter = 126.0
-    tower.hub_height = 90.0
-    tower.year = 2009
-    tower.month = 12
-    
-    tower.execute()
-    
-    print "Tower csm component"
-    print "Tower mass: {0}".format(tower.tower_mass)
-    print "Tower cost: {0}".format(tower.tower_cost)
 
 
 ##### Turbine
 
 # -------------------------------------------------------
 # Rotor mass adder
-class rotor_mass_adder(Component):
-
-    # Variables
-    blade_mass = Float(0.0, units='kg', iotype='in', desc='mass for a single wind turbine blade')
-    hub_system_mass = Float(0.0, units='kg', iotype='in', desc='hub system mass')  
-    
-    # Parameters
-    blade_number = Int(3, iotype='in', desc='blade numebr')
-    
-    # Outputs
-    rotor_mass = Float(units='kg', iotype='out', desc= 'overall rotor mass')
+class rotor_mass_adder(object):
 
     def __init__(self):
+        super(rotor_mass_adder, self).__init__()
       
-        super(rotor_mass_adder,self).__init__()
+        # Outputs
+        self.rotor_mass = 0.0 #Float(units='kg', iotype='out', desc= 'overall rotor mass')
 
-        #controls what happens if derivatives are missing
-        self.missing_deriv_policy = 'assume_zero'
-
-    def execute(self):
+    def compute(self, blade_mass, hub_system_mass, blade_number=3):
        
+        # Variables
+        self.blade_mass = blade_mass # Float(0.0, units='kg', iotype='in', desc='mass for a single wind turbine blade')
+        self.hub_system_mass = hub_system_mass # Float(0.0, units='kg', iotype='in', desc='hub system mass')  
+        
+        # Parameters
+        self.blade_number = blade_number #Int(3, iotype='in', desc='blade numebr')
+
         self.rotor_mass = self.blade_mass * self.blade_number + self.hub_system_mass
          
         self.d_mass_d_blade_mass = self.blade_number
@@ -892,185 +763,38 @@ class rotor_mass_adder(Component):
         
         return self.J
 
-# --------------------------------------------------------------------
-@implement_base(BaseTurbineCostModel)
-class tcc_csm_assembly(Assembly):
-
-    # Variables
-    rotor_diameter = Float(units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
-    machine_rating = Float(units = 'kW', iotype='in', desc = 'rated power of wind turbine')
-    hub_height = Float(units = 'm', iotype='in', desc= 'hub height of wind turbine above ground / sea level')
-    rotor_thrust = Float(iotype='in', units='N', desc='maximum thurst from rotor')    
-    rotor_torque = Float(iotype='in', units='N * m', desc = 'torque from rotor at rated power')
-
-    # Parameters
-    year = Int(2009, iotype='in', desc = 'year of project start')
-    month = Int(12, iotype='in', desc = 'month of project start')
-    blade_number = Int(3, iotype='in', desc = 'number of rotor blades')
-    offshore = Bool(True, iotype='in', desc = 'boolean for offshore')
-    advanced_blade = Bool(False, iotype='in', desc = 'boolean for use of advanced blade curve')
-    drivetrain_design = Enum('geared', ('geared', 'single_stage', 'multi_drive', 'pm_direct_drive'), iotype='in')
-    crane = Bool(True, iotype='in', desc = 'boolean for presence of a service crane up tower')
-    advanced_bedplate = Int(0, iotype='in', desc= 'indicator for drivetrain bedplate design 0 - conventional')   
-    advanced_tower = Bool(False, iotype='in', desc = 'advanced tower configuration')
-
-    # Outputs
-    turbine_cost = Float(0.0, iotype='out', desc='Overall wind turbine capial costs including transportation costs')
-    rotor_cost = Float(0.0, iotype='out', desc='Rotor cost')
-    nacelle_cost = Float(0.0, iotype='out', desc='Nacelle cost')
-    tower_cost = Float(0.0, iotype='out', desc='Tower cost')
-
-    def configure(self):
-
-        configure_base_tcc(self)
-
-        self.replace('tcc', tcc_csm_component())
-        self.add('blades', blades_csm_component())
-        self.add('hub', hub_csm_component())
-        self.add('nacelle', nacelle_csm_component())
-        self.add('tower', tower_csm_component())
-        self.add('rotor', rotor_mass_adder())
-        
-        self.connect('rotor_diameter', ['blades.rotor_diameter', 'hub.rotor_diameter', 'nacelle.rotor_diameter', 'tower.rotor_diameter'])
-        self.connect('machine_rating', 'nacelle.machine_rating')
-        self.connect('hub_height', ['tower.hub_height'])
-        self.connect('blade_number', ['rotor.blade_number', 'hub.blade_number', 'tcc.blade_number'])
-        self.connect('offshore', ['nacelle.offshore', 'tcc.offshore'])
-        self.connect('year', ['blades.year', 'hub.year', 'nacelle.year', 'tower.year'])
-        self.connect('month', ['blades.month', 'hub.month', 'nacelle.month', 'tower.month'])
-        
-        self.connect('blades.blade_mass', ['hub.blade_mass', 'rotor.blade_mass'])
-        self.connect('hub.hub_system_mass', 'rotor.hub_system_mass')
-        self.connect('rotor.rotor_mass', 'nacelle.rotor_mass')
-        
-        self.connect('advanced_blade','blades.advanced_blade')
-        self.connect('rotor_thrust','nacelle.rotor_thrust')
-        self.connect('rotor_torque','nacelle.rotor_torque')
-        self.connect('crane','nacelle.crane')
-        self.connect('advanced_bedplate','nacelle.advanced_bedplate')
-        self.connect('drivetrain_design','nacelle.drivetrain_design')
-        self.connect('advanced_tower','tower.advanced_tower')
-        
-        # connect mass and cost outputs to tcc
-        self.connect('blades.blade_mass', ['tcc.blade_mass'])
-        self.connect('blades.blade_cost', 'tcc.blade_cost')
-
-        self.connect('hub.hub_system_cost', 'tcc.hub_system_cost')
-        self.connect('hub.hub_system_mass', 'tcc.hub_system_mass')
-        '''self.connect('hub.hub_cost', 'tcc.hub_cost')
-        self.connect('hub.hub_mass', 'tcc.hub_mass')
-        self.connect('hub.pitch_system_cost', 'tcc.pitch_system_cost')
-        self.connect('hub.pitch_system_mass', 'tcc.pitch_system_mass')
-        self.connect('hub.spinner_cost', 'tcc.spinner_cost')
-        self.connect('hub.spinner_mass', 'tcc.spinner_mass')'''
-
-        self.connect('nacelle.nacelle_mass', 'tcc.nacelle_mass')
-        '''self.connect('nacelle.lowSpeedShaft_mass', 'tcc.lowSpeedShaft_mass')
-        self.connect('nacelle.bearings_mass', 'tcc.bearings_mass')
-        self.connect('nacelle.gearbox_mass', 'tcc.gearbox_mass')
-        self.connect('nacelle.mechanicalBrakes_mass', 'tcc.mechanicalBrakes_mass')
-        self.connect('nacelle.generator_mass', 'tcc.generator_mass')
-        self.connect('nacelle.VSElectronics_mass', 'tcc.VSElectronics_mass')
-        self.connect('nacelle.yawSystem_mass', 'tcc.yawSystem_mass')
-        self.connect('nacelle.mainframeTotal_mass', 'tcc.mainframeTotal_mass')
-        self.connect('nacelle.electronicCabling_mass', 'tcc.electronicCabling_mass')
-        self.connect('nacelle.HVAC_mass', 'tcc.HVAC_mass')
-        self.connect('nacelle.nacelleCover_mass', 'tcc.nacelleCover_mass')
-        self.connect('nacelle.controls_mass', 'tcc.controls_mass')'''
-
-        self.connect('nacelle.nacelle_cost', ['tcc.nacelle_cost', 'nacelle_cost'])
-        '''self.connect('nacelle.lowSpeedShaft_cost', 'tcc.lowSpeedShaft_cost')
-        self.connect('nacelle.bearings_cost', 'tcc.bearings_cost')
-        self.connect('nacelle.gearbox_cost', 'tcc.gearbox_cost')
-        self.connect('nacelle.mechanicalBrakes_cost', 'tcc.mechanicalBrakes_cost')
-        self.connect('nacelle.generator_cost', 'tcc.generator_cost')
-        self.connect('nacelle.VSElectronics_cost', 'tcc.VSElectronics_cost')
-        self.connect('nacelle.yawSystem_cost', 'tcc.yawSystem_cost')
-        self.connect('nacelle.mainframeTotal_cost', 'tcc.mainframeTotal_cost')
-        self.connect('nacelle.electronicCabling_cost', 'tcc.electronicCabling_cost')
-        self.connect('nacelle.HVAC_cost', 'tcc.HVAC_cost')
-        self.connect('nacelle.nacelleCover_cost', 'tcc.nacelleCover_cost')
-        self.connect('nacelle.controls_cost', 'tcc.controls_cost')'''
-        
-        self.connect('tower.tower_mass', 'tcc.tower_mass')
-        self.connect('tower.tower_cost', ['tcc.tower_cost','tower_cost'])
-
-        self.connect('tcc.rotor_cost','rotor_cost')
-        self.create_passthrough('tcc.turbine_mass')
-
-    def execute(self):
-
-        super(tcc_csm_assembly, self).execute()  # will actually run the workflow
-
 #------------------------------------------------------------------
-@implement_base(BaseTCCAggregator)
-class tcc_csm_component(Component):
+class turbine_csm(object):
 
-    # Variables    
-    blade_cost = Float(0.0, units='USD', iotype='in', desc='cost for a single wind turbine blade')
-    blade_mass = Float(0.0, units='kg', iotype='in', desc='mass for a single wind turbine blade')
-    hub_system_cost = Float(0.0, units='USD', iotype='in', desc='hub system cost')
-    hub_system_mass = Float(0.0, units='kg', iotype='in', desc='hub system mass')
-    nacelle_mass = Float(0.0, units='kg', iotype='in', desc='nacelle mass')
-    nacelle_cost = Float(0.0, units='USD', iotype='in', desc='nacelle cost')
-    tower_cost = Float(0.0, units='USD', iotype='in', desc='cost for a tower')
-    tower_mass = Float(0.0, units='kg', iotype='in', desc='mass for a turbine tower')
+    def __init__(self):
 
-    # Parameters (and ignored inputs)
-    blade_number = Int(3, iotype='in', desc = 'number of rotor blades')
-    offshore = Bool(False, iotype='in', desc= 'boolean for offshore')
+        super(turbine_csm, self).__init__()
 
-    '''hub_cost = Float(0.0, units='USD', iotype='in', desc='hub cost')
-    hub_mass = Float(0.0, units='kg', iotype='in', desc='hub mass')
-    pitch_system_cost = Float(0.0, units='USD', iotype='in', desc='pitch system cost')
-    pitch_system_mass = Float(0.0, units='kg', iotype='in', desc='pitch system mass')
-    spinner_cost = Float(0.0, units='USD', iotype='in', desc='spinner / nose cone cost')
-    spinner_mass = Float(0.0, units='kg', iotype='in', desc='spinner / nose cone mass')
+        # Outputs
+        self.rotor_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc='rotor mass')
+        self.rotor_cost = 0.0 # Float(0.0, iotype='out', desc='rotor cost')
+        self.turbine_mass = 0.0 # Float(0.0, units='kg', iotype='out', desc='turbine mass')
+        self.turbine_cost = 0.0 # Float(0.0, iotype='out', desc='Overall wind turbine capial costs including transportation costs')
 
-    lowSpeedShaft_mass = Float(0.0, units='kg', iotype='in', desc= 'low speed shaft mass')
-    bearings_mass = Float(0.0, units='kg', iotype='in', desc= 'bearings system mass')
-    gearbox_mass = Float(0.0, units='kg', iotype='in', desc= 'gearbox and housing mass')
-    mechanicalBrakes_mass = Float(0.0, units='kg', iotype='in', desc= 'high speed shaft, coupling, and mechanical brakes mass')
-    generator_mass = Float(0.0, units='kg', iotype='in', desc= 'generator and housing mass')
-    VSElectronics_mass = Float(0.0, units='kg', iotype='in', desc= 'variable speed electronics mass')
-    yawSystem_mass = Float(0.0, units='kg', iotype='in', desc= 'yaw system mass')
-    mainframeTotal_mass = Float(0.0, units='kg', iotype='in', desc= 'mainframe total mass including bedplate')
-    electronicCabling_mass = Float(0.0, units='kg', iotype='in', desc= 'electronic cabling mass')
-    HVAC_mass = Float(0.0, units='kg', iotype='in', desc= 'HVAC system mass')
-    nacelleCover_mass = Float(0.0, units='kg', iotype='in', desc= 'nacelle cover mass')
-    controls_mass = Float(0.0, units='kg', iotype='in', desc= 'control system mass')
-
-    lowSpeedShaft_cost = Float(0.0, units='kg', iotype='in', desc= 'low speed shaft _cost')
-    bearings_cost = Float(0.0, units='kg', iotype='in', desc= 'bearings system _cost')
-    gearbox_cost = Float(0.0, units='kg', iotype='in', desc= 'gearbox and housing _cost')
-    mechanicalBrakes_cost = Float(0.0, units='kg', iotype='in', desc= 'high speed shaft, coupling, and mechanical brakes _cost')
-    generator_cost = Float(0.0, units='kg', iotype='in', desc= 'generator and housing _cost')
-    VSElectronics_cost = Float(0.0, units='kg', iotype='in', desc= 'variable speed electronics _cost')
-    yawSystem_cost = Float(0.0, units='kg', iotype='in', desc= 'yaw system _cost')
-    mainframeTotal_cost = Float(0.0, units='kg', iotype='in', desc= 'mainframe total _cost including bedplate')
-    electronicCabling_cost = Float(0.0, units='kg', iotype='in', desc= 'electronic cabling _cost')
-    HVAC_cost = Float(0.0, units='kg', iotype='in', desc= 'HVAC system _cost')
-    nacelleCover_cost = Float(0.0, units='kg', iotype='in', desc= 'nacelle cover _cost')
-    controls_cost = Float(0.0, units='kg', iotype='in', desc= 'control system _cost')'''
-
-    # Outputs
-    rotor_mass = Float(0.0, units='kg', iotype='out', desc='rotor mass')
-    rotor_cost = Float(0.0, iotype='out', desc='rotor cost')
-    turbine_mass = Float(0.0, units='kg', iotype='out', desc='turbine mass')
-    turbine_cost = Float(0.0, iotype='out', desc='Overall wind turbine capial costs including transportation costs')
-
-    def __init__(self):    
-
-        Component.__init__(self)
-
-        #controls what happens if derivatives are missing
-        self.missing_deriv_policy = 'assume_zero'
-
-    def execute(self):
+    def compute(self, blade_cost, blade_mass, hub_system_cost, hub_system_mass, nacelle_mass, nacelle_cost, tower_cost, tower_mass, \
+                blade_number=3, offshore=True):
         """
-        Execute Turbine Capital _costs Model of the NREL _cost and Scaling Model.
+        compute Turbine Capital _costs Model of the NREL _cost and Scaling Model.
         """
 
+        # Variables    
+        self.blade_cost = blade_cost # Float(0.0, units='USD', iotype='in', desc='cost for a single wind turbine blade')
+        self.blade_mass = blade_mass # Float(0.0, units='kg', iotype='in', desc='mass for a single wind turbine blade')
+        self.hub_system_cost = hub_system_cost # Float(0.0, units='USD', iotype='in', desc='hub system cost')
+        self.hub_system_mass = hub_system_mass # Float(0.0, units='kg', iotype='in', desc='hub system mass')
+        self.nacelle_mass = nacelle_mass # Float(0.0, units='kg', iotype='in', desc='nacelle mass')
+        self.nacelle_cost = nacelle_cost # Float(0.0, units='USD', iotype='in', desc='nacelle cost')
+        self.tower_cost = tower_cost # Float(0.0, units='USD', iotype='in', desc='cost for a tower')
+        self.tower_mass = tower_mass # Float(0.0, units='kg', iotype='in', desc='mass for a turbine tower')
+    
+        # Parameters (and ignored inputs)
+        self.blade_number = blade_number #Int(3, iotype='in', desc = 'number of rotor blades')
+        self.offshore = offshore #Bool(False, iotype='in', desc= 'boolean for offshore')
 
         # high level output assignment
         self.rotor_mass = self.blade_mass * self.blade_number + self.hub_system_mass
@@ -1113,22 +837,137 @@ class tcc_csm_component(Component):
                            [0.0, 0.0, 0.0, 0.0, self.d_cost_d_blade_cost, self.d_cost_d_hub_cost, self.d_cost_d_nacelle_cost, self.d_cost_d_tower_cost]])
         
         return self.J
-  
-#-----------------------------------------------------------------
+
+# --------------------------------------------------------------------
+class tcc_csm(object):
+
+    def __init__(self):
+
+        super(tcc_csm, self).__init__()  # will actually run the workflow
+
+        # Outputs
+        self.turbine_cost = 0.0 # Float(0.0, iotype='out', desc='Overall wind turbine capial costs including transportation costs')
+        self.rotor_cost = 0.0 # Float(0.0, iotype='out', desc='Rotor cost')
+        self.nacelle_cost = 0.0 # Float(0.0, iotype='out', desc='Nacelle cost')
+        self.tower_cost = 0.0 # Float(0.0, iotype='out', desc='Tower cost')
+
+    def compute(self, rotor_diameter, machine_rating, hub_height, rotor_thrust, rotor_torque, \
+                year=2009, month=12, blade_number=3, offshore=True, advanced_blade=False, drivetrain_design='geared', \
+                crane=True, advanced_bedplate=0, advanced_tower=False):
+
+        # Variables
+        self.rotor_diameter = rotor_diameter #Float(units = 'm', iotype='in', desc= 'rotor diameter of the machine') 
+        self.machine_rating = machine_rating #Float(units = 'kW', iotype='in', desc = 'rated power of wind turbine')
+        self.hub_height = hub_height #Float(units = 'm', iotype='in', desc= 'hub height of wind turbine above ground / sea level')
+        self.rotor_thrust = rotor_thrust #Float(iotype='in', units='N', desc='maximum thurst from rotor')    
+        self.rotor_torque = rotor_torque #Float(iotype='in', units='N * m', desc = 'torque from rotor at rated power')
+    
+        # Parameters
+        self.year = year #Int(2009, iotype='in', desc = 'year of project start')
+        self.month = month #Int(12, iotype='in', desc = 'month of project start')
+        self.blade_number = blade_number #Int(3, iotype='in', desc = 'number of rotor blades')
+        self.offshore = offshore #Bool(True, iotype='in', desc = 'boolean for offshore')
+        self.advanced_blade = advanced_blade #Bool(False, iotype='in', desc = 'boolean for use of advanced blade curve')
+        self.drivetrain_design = drivetrain_design #Enum('geared', ('geared', 'single_stage', 'multi_drive', 'pm_direct_drive'), iotype='in')
+        self.crane = crane #Bool(True, iotype='in', desc = 'boolean for presence of a service crane up tower')
+        self.advanced_bedplate = advanced_bedplate #Int(0, iotype='in', desc= 'indicator for drivetrain bedplate design 0 - conventional')   
+        self.advanced_tower = advanced_tower #Bool(False, iotype='in', desc = 'advanced tower configuration')
+
+        blade = blades_csm()
+        blade.compute(rotor_diameter, year, month, advanced_blade)
+
+        hub = hub_csm()
+        hub.compute(rotor_diameter, blade.blade_mass, year, month, blade_number)
+        
+        rotor = rotor_mass_adder()
+        rotor.compute(blade.blade_mass, hub.hub_system_mass, blade_number)
+        
+        nacelle = nacelle_csm()
+        nacelle.compute(rotor_diameter, rotor.rotor_mass, rotor_thrust, rotor_torque, machine_rating, \
+                        drivetrain_design, crane, advanced_bedplate, year, month, offshore)
+        
+        tower = tower_csm()
+        tower.compute(rotor_diameter, hub_height, year, month, advanced_tower)
+        
+        turbine = turbine_csm()
+        turbine.compute(blade.blade_cost, blade.blade_mass, hub.hub_system_cost, hub.hub_system_mass, \
+                        nacelle.nacelle_mass, nacelle.nacelle_cost, tower.tower_cost, tower.tower_mass, \
+                        blade_number, offshore)
+        
+        self.rotor_cost = turbine.rotor_cost
+        self.rotor_mass = turbine.rotor_mass
+        self.turbine_cost = turbine.turbine_cost
+        self.turbine_mass = turbine.turbine_mass
+
+
+### FUSED-wrapper file (in WISDEM/Plant_CostsSE)
+class tcc_csm_fused(FUSED_Object):
+
+    def __init__(self, offshore=False, advanced_blade=True, drivetrain_design='geared', \
+                       crane=True, advanced_bedplate=0, advanced_tower=False):
+
+        super(tcc_csm_fused, self).__init__()
+
+        self.offshore = offshore 
+        self.advanced_blade = advanced_blade 
+        self.drivetrain_design = drivetrain_design 
+        self.crane = crane 
+        self.advanced_bedplate = advanced_bedplate  
+        self.advanced_tower = advanced_tower
+
+        self.implement_fifc(fifc_tcc_costs) # pulls in variables from fused-wind interface (not explicit)
+
+        # Add model specific inputs
+        self.add_input(**fusedvar('rotor_thrust',0.0))
+        self.add_input(**fusedvar('rotor_torque',0.0)) 
+        self.add_input(**fusedvar('year',0.0)) 
+        self.add_input(**fusedvar('month',0.0))
+
+        # Add model specific outputs
+        self.add_output(**fusedvar('rotor_cost',0.0))
+        self.add_output(**fusedvar('rotor_mass',0.0)) 
+        self.add_output(**fusedvar('turbine_mass',0.0)) 
+
+    def compute(self, inputs, outputs):
+
+        tcc = tcc_csm()
+
+        machine_rating = inputs['machine_rating']
+        rotor_diameter = inputs['rotor_diameter']
+        hub_height = inputs['hub_height']
+        blade_number = inputs['blade_number']
+        rotor_thrust = inputs['rotor_thrust']
+        rotor_torque = inputs['rotor_torque']
+        year = inputs['year']
+        month = inputs['month']
+
+
+        tcc.compute(rotor_diameter, machine_rating, hub_height, rotor_thrust, rotor_torque, \
+                year, month, blade_number, self.offshore, self.advanced_blade, self.drivetrain_design, \
+                self.crane, self.advanced_bedplate, self.advanced_tower)
+
+        # Outputs
+        outputs['turbine_cost'] = tcc.turbine_cost 
+        outputs['turbine_mass'] = tcc.turbine_mass
+        outputs['rotor_cost'] = tcc.rotor_cost
+        outputs['rotor_mass'] = tcc.rotor_mass
+        
+        return outputs
 
 def example_turbine():
 
+    # openmdao example of execution
+    root = Group()
+    root.add('tcc_csm_test', FUSED_OpenMDAO(tcc_csm_fused()), promotes=['*'])
+    prob = Problem(root)
+    prob.setup()
+
     # simple test of module
-    trb = tcc_csm_assembly()
-    trb.rotor_diameter = 126.0
-    trb.advanced_blade = True
-    trb.blade_number = 3
-    trb.hub_height = 90.0    
-    trb.machine_rating = 5000.0
-    trb.offshore = True
-    trb.year = 2009
-    trb.month = 12
-    trb.drivetrain_design = 'geared'
+    tcc = tcc_csm()
+    prob['rotor_diameter'] = 126.0
+    prob['blade_number'] = 3
+    prob['hub_height'] = 90.0    
+    prob['machine_rating'] = 5000.0
 
     # Rotor force calculations for nacelle inputs
     maxTipSpd = 80.0
@@ -1137,25 +976,21 @@ def example_turbine():
     thrustCoeff = 0.50
     airDensity = 1.225
 
-    ratedHubPower  = trb.machine_rating / maxEfficiency 
-    rotorSpeed     = (maxTipSpd/(0.5*trb.rotor_diameter)) * (60.0 / (2*np.pi))
-    trb.rotor_thrust  = airDensity * thrustCoeff * np.pi * trb.rotor_diameter**2 * (ratedWindSpd**2) / 8
-    trb.rotor_torque = ratedHubPower/(rotorSpeed*(np.pi/30))*1000
+    ratedHubPower  = machine_rating / maxEfficiency 
+    rotorSpeed     = (maxTipSpd/(0.5*rotor_diameter)) * (60.0 / (2*np.pi))
+    prob['rotor_thrust']  = airDensity * thrustCoeff * np.pi * rotor_diameter**2 * (ratedWindSpd**2) / 8
+    prob['rotor_torque'] = ratedHubPower/(rotorSpeed*(np.pi/30))*1000
 
-    trb.run()
+    tcc.compute(rotor_diameter, machine_rating, hub_height, rotor_thrust, rotor_torque, \
+                year, month, blade_number, offshore, advanced_blade, drivetrain_design, \
+                crane, advanced_bedplate, advanced_tower)
     
-    print "The results for the NREL 5 MW Reference Turbine in an offshore 20 m water depth location are:"
-    print "Overall turbine mass is {0:.2f} kg".format(trb.turbine_mass)
-    print "Overall turbine cost is ${0:.2f} USD".format(trb.turbine_cost)
+    print("The results for the NREL 5 MW Reference Turbine in an offshore 20 m water depth location are:")
+    for io in root.unknowns:
+        print(io + ' ' + str(root.unknowns[io]))
+
+
 
 if __name__ == "__main__":
 
     example_turbine()
-    
-    #example_blade()
-    
-    #example_hub()
-    
-    #example_nacelle()
-    
-    #example_tower()
