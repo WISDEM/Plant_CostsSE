@@ -567,7 +567,7 @@ def check_for_missing_unit_tests(modules):
 
     for mod, test in zip(tomod, totest):
         if 'Test'+test not in tests:
-            print '!!! There does not appear to be a unit test for:', mod + '.' + test
+            print ('!!! There does not appear to be a unit test for:') #TODO:, mod + '.' + test
 
 
 def check_gradient_unit_test(unittest, comp, fd='central', step_size=1e-6, tol=1e-6, display=False,
@@ -604,8 +604,8 @@ def check_gradient_unit_test(unittest, comp, fd='central', step_size=1e-6, tol=1
     for name, err in zip(names, errors):
         try:
             unittest.assertLessEqual(err, tol)
-        except AssertionError, e:
-            print '*** error in:', name
+        except AssertionError as e:
+            print('*** error in:') #TODO, name
             raise e
 
 
@@ -658,10 +658,10 @@ def check_gradient(comp, fd='central', step_size=1e-6, tol=1e-6, display=False,
 
         if len(potential_missed_inputs) > 0 or len(potential_missed_outputs) > 0:
             print
-            print '*** Warning: ' + comp.__class__.__name__ + ' does not supply derivatives for the following'
+            '''TODOprint '*** Warning: ' + comp.__class__.__name__ + ' does not supply derivatives for the following'
             print '\tinputs:', potential_missed_inputs
             print '\toutputs:', potential_missed_outputs
-            print
+            print'''
 
 
     comp.run()
@@ -768,7 +768,7 @@ def check_gradient(comp, fd='central', step_size=1e-6, tol=1e-6, display=False,
     errorvec = []
 
     if display:
-        print '{:<20} ({}) {:<10} ({}, {})'.format('error', 'errortype', 'name', 'analytic', 'fd')
+        #print '{:<20} ({}) {:<10} ({}, {})'.format('error', 'errortype', 'name', 'analytic', 'fd')
         print
 
     for i in range(m):
@@ -818,15 +818,17 @@ def check_gradient(comp, fd='central', step_size=1e-6, tol=1e-6, display=False,
 
             if display:
                 output = '{}{:<20} ({}) {}: ({}, {})'.format(star, error, errortype, name, J[i, j], JFD[i, j])
-                print output
+                #print output
 
             if show_scaling_warnings and J[i, j] != 0 and np.abs(J[i, j]) < min_grad:
-                print '*** Warning: The following analytic gradient is very small and may need to be scaled:'
-                print '\t(' + comp.__class__.__name__ + ') ' + name + ':', J[i, j]
+                print
+                #print '*** Warning: The following analytic gradient is very small and may need to be scaled:'
+                #print '\t(' + comp.__class__.__name__ + ') ' + name + ':', J[i, j]
 
             if show_scaling_warnings and np.abs(J[i, j]) > max_grad:
-                print '*** Warning: The following analytic gradient is very large and may need to be scaled:'
-                print '\t(' + comp.__class__.__name__ + ') ' + name + ':', J[i, j]
+                print
+                #print '*** Warning: The following analytic gradient is very large and may need to be scaled:'
+                #print '\t(' + comp.__class__.__name__ + ') ' + name + ':', J[i, j]
 
 
             # save

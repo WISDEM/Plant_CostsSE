@@ -79,7 +79,7 @@ class PPITbl:
             return None            
         if (len(self.cost[start_row]) < start_mon):
             raise IndexError("Start_mon out of range")
-        if (len(self.cost[end_row]) < end_mon):
+        if (len(self.cost[int(end_row)]) < int(end_mon)):
             #print "\n*** EM %d > LER %d in table %s" % (end_mon, len(self.cost[end_row]), self.code)
             raise IndexError("End_mon out of range")
             
@@ -87,7 +87,7 @@ class PPITbl:
             #print "SR %d ER %d" % (start_row,end_row)
             #print "LSR %d LER %d" % (len(self.cost[start_row]),len(self.cost[end_row]))
             cost_start = self.cost[start_row][start_mon-1]
-            cost_end   = self.cost[end_row][end_mon-1]
+            cost_end   = self.cost[int(end_row)][int(end_mon)-1]
         except:
             #print "Index out of range for table %s %s" % (self.code, self.name)
             return None

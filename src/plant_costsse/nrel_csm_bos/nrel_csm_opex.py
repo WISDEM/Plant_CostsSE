@@ -156,13 +156,13 @@ def example():
     prob['turbine_number'] = 100
 
     prob.run()
-    print "Average annual operational expenditures for an offshore wind plant with 100 NREL 5 MW turbines"
+    print("Average annual operational expenditures for an offshore wind plant with 100 NREL 5 MW turbines")
     for io in root.unknowns:
         print(io + ' ' + str(root.unknowns[io]))
 
     prob['sea_depth'] = 0.0
     prob.run()
-    print "Average annual operational expenditures for an land-based wind plant with 100 NREL 5 MW turbines"
+    print("Average annual operational expenditures for an land-based wind plant with 100 NREL 5 MW turbines")
     for io in root.unknowns:
         print(io + ' ' + str(root.unknowns[io]))
 

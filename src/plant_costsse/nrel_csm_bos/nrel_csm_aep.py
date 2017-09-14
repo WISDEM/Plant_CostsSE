@@ -95,7 +95,6 @@ class aero_csm(object):
         omegaTflag = True
         if (b**2-4*kTorque*c) > 0:
            omegaT = -(b/(2*kTorque))-(np.sqrt(b**2-4*kTorque*c)/(2*kTorque))  # Omega T
-           #print [kTorque, b, c, omegaT]
 
            windOmegaT = (omegaT*self.rotorDiam)/(2*self.maxTipSpdRatio) # Wind  at omegaT (M25)
            pwrOmegaT  = kTorque*omegaT**3/1000                                # Power at ometaT (M26)
@@ -118,7 +117,7 @@ class aero_csm(object):
         Wind = []
         Wval = 0.0
         Wind.append(Wval)
-        for i in xrange(1,n):
+        for i in range(1,n):
            Wval += ws_inc
            Wind.append(Wval)
 
@@ -129,7 +128,7 @@ class aero_csm(object):
         ratedWSflag = False
         # determine power curve after losses
         mtp = [None] * n
-        for i in xrange(0,n):
+        for i in range(0,n):
            mtp[i] = itp[i] #* self.drivetrain.getDrivetrainEfficiency(itp[i],self.ratedHubPower)
            #print [Wind[i],itp[i],self.drivetrain.getDrivetrainEfficiency(itp[i],self.ratedHubPower),mtp[i]] # for testing
            if (mtp[i] > self.ratedPower):
@@ -153,7 +152,7 @@ class aero_csm(object):
 
         idealPwr = 0.0
 
-        for i in xrange(0,n):
+        for i in range(0,n):
             if (Wind[i] >= self.cutOutWS ) or (Wind[i] <= self.cutInWS):
                 idealPwr = 0.0  # cut out
             else:
@@ -231,7 +230,7 @@ class aep_csm(object):
         L = hubHeightWindSpeed / exp(np.log(gamma(1.+1./K)))
 
         turbine_energy = 0.0
-        for i in xrange(0,power_array.shape[1]):
+        for i in range(0,power_array.shape[1]):
            X = power_array[0,i]
            result = power_array[1,i] * weibull(X, K, L)
            turbine_energy += result
@@ -412,8 +411,9 @@ def example():
 
     prob.run()
 
-    print "AEP gross output: {0}".format(prob['gross_aep'])
-    print "AEP net output: {0}".format(prob['net_aep'])
+    print("AEP output")
+    for io in root.unknowns:
+        print(io + ' ' + str(root.unknowns[io]))
 
 if __name__=="__main__":
 
