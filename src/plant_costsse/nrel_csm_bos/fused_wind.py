@@ -100,9 +100,9 @@ class FUSED_Object(object):
 class FUSED_OpenMDAO(Component):
 
     def __init__(self, model):
-        
+
         super(FUSED_OpenMDAO,self).__init__()
-    
+
         self.model = model
 
         for k, v in self.model.interface['input'].items():
@@ -117,9 +117,10 @@ class FUSED_OpenMDAO(Component):
                             raise Exception
                         v['shape'][i]=kwargs[my_name]
                 if 'val' in v.keys():
-                    v['val']=np.zeros(v['shape'])
-
-            self.add_param(k, v)
+                    v['val']=np.zeros(v['shape'], dtype=float)
+            else:
+                v['val'] = float(v['val'])
+            self.add_param(k, v['val'])
 
         for k, v in self.model.interface['output'].items():
 
@@ -135,10 +136,12 @@ class FUSED_OpenMDAO(Component):
                 if 'val' in v.keys():
                     v['val']=np.zeros(v['shape'])
 
-            self.add_output(k, v)
-          
+            else:
+                v['val'] = float(v['val'])
+            self.add_output(k, v['val'])
+
     def solve_nonlinear(self, params, unknowns, resids):
-      
+
         self.model.compute(params, unknowns)
-        
+
 

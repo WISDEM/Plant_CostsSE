@@ -38,7 +38,7 @@ set_input(fifc_bos_costs, turbine_number)
 class bos_csm_fused(FUSED_Object):
 
     def __init__(self):
-        
+
         super(bos_csm_fused, self).__init__()
 
         self.implement_fifc(fifc_bos_costs) # pulls in variables from fused-wind interface (not explicit)
@@ -48,7 +48,7 @@ class bos_csm_fused(FUSED_Object):
         self.add_input(**fusedvar('year',0.0)) # = Int(2009, iotype='in', desc='year for project start')
         self.add_input(**fusedvar('month',0.0)) # = Int(12, iotype = 'in', desc= 'month for project start')
         self.add_input(**fusedvar('multiplier',0.0)) # = Float(1.0, iotype='in')
-    
+
         # Add model specific outputs
         self.add_output(**fusedvar('bos_breakdown_development_costs',0.0)) #  = Float(desc='Overall wind plant balance of station/system costs up to point of comissioning')
         self.add_output(**fusedvar('bos_breakdown_preparation_and_staging_costs',0.0)) #  = Float(desc='Site preparation and staging')
@@ -62,21 +62,21 @@ class bos_csm_fused(FUSED_Object):
     def compute(self, inputs, outputs):
 
         bos = bos_csm()
-        
+
         machine_rating = inputs['machine_rating']
         rotor_diameter = inputs['rotor_diameter']
         hub_height = inputs['hub_height']
         RNA_mass = inputs['RNA_mass']
         turbine_cost = inputs['turbine_cost']
-        
+
         turbine_number = inputs['turbine_number']
         sea_depth = inputs['sea_depth']
         year = inputs['year']
         month = inputs['month']
         multiplier = inputs['multiplier']
-        
+
         bos.compute(machine_rating, rotor_diameter, hub_height, RNA_mass, turbine_cost, turbine_number, sea_depth, year, month, multiplier)
-        
+
         print(bos.bos_costs)
         # Outputs
         outputs['bos_costs'] = bos.bos_costs #  = Float(iotype='out', desc='Overall wind plant balance of station/system costs up to point of comissioning')
@@ -98,7 +98,7 @@ class bos_csm(object):
 
         # Outputs
         #bos_breakdown = VarTree(BOSVarTree(), iotype='out', desc='BOS cost breakdown')
-        #bos_costs = Float(iotype='out', desc='Overall wind plant balance of station/system costs up to point of comissioning')    
+        #bos_costs = Float(iotype='out', desc='Overall wind plant balance of station/system costs up to point of comissioning')
         self.bos_costs = 0.0 # *= self.multiplier  # TODO: add to gradients
         self.bos_breakdown_development_costs = 0.0 # engPermits_costs * self.turbine_number
         self.bos_breakdown_preparation_and_staging_costs = 0.0 # (roadsCivil_costs + portStaging_costs) * self.turbine_number
@@ -107,7 +107,7 @@ class bos_csm(object):
         self.bos_breakdown_electrical_costs = 0.0 # electrical_costs * self.turbine_number
         self.bos_breakdown_assembly_and_installation_costs = 0.0 # installation_costs * self.turbine_number
         self.bos_breakdown_soft_costs = 0.0 # 0.0
-        self.bos_breakdown_other_costs = 0.0 # (pai_costs + scour_costs + suretyBond) * self.turbine_number    
+        self.bos_breakdown_other_costs = 0.0 # (pai_costs + scour_costs + suretyBond) * self.turbine_number
 
     def compute(self, machine_rating, rotor_diameter, hub_height, RNA_mass, turbine_cost, turbine_number = 100, sea_depth = 20.0, year = 2009, month=12, multiplier = 1.0):
 
@@ -118,7 +118,7 @@ class bos_csm(object):
         self.hub_height = hub_height #Float(iotype='in', units='m', desc='hub height')
         self.RNA_mass = RNA_mass #Float(iotype='in', units='kg', desc='Rotor Nacelle Assembly mass')
         self.turbine_cost = turbine_cost #Float(iotype='in', units='USD', desc='Single Turbine Capital _costs')
-    
+
         # Parameters
         self.turbine_number = turbine_number #Int(iotype='in', desc='number of turbines in project')
         self.sea_depth = sea_depth #Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
@@ -320,7 +320,7 @@ class bos_csm(object):
         self.bos_breakdown_assembly_and_installation_costs = installation_costs * self.turbine_number
         self.bos_breakdown_soft_costs = 0.0
         self.bos_breakdown_other_costs = (pai_costs + scour_costs + suretyBond) * self.turbine_number
-  
+
         # derivatives
         self.d_development_d_rating *= self.turbine_number
         self.d_preparation_d_rating *= self.turbine_number
@@ -406,7 +406,6 @@ class bos_csm(object):
 
         return self.J
 
-
 def example():
 
     # openmdao example of execution
@@ -414,7 +413,7 @@ def example():
     root.add('bos_csm_test', FUSED_OpenMDAO(bos_csm_fused()), promotes=['*'])
     prob = Problem(root)
     prob.setup()
-    
+
     prob['machine_rating'] = 5000.0
     prob['rotor_diameter'] = 126.0
     prob['turbine_cost'] = 5950209.28
