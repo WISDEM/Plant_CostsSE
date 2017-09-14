@@ -22,14 +22,14 @@ class bos_csm_component(Component):
         self.add_param('hub_height', val=0.0) # = Float(iotype='in', units='m', desc='hub height')
         self.add_param('RNA_mass', val=0.0) # = Float(iotype='in', units='kg', desc='Rotor Nacelle Assembly mass')
         self.add_param('turbine_cost', val=0.0) # = Float(iotype='in', units='USD', desc='Single Turbine Capital _costs')
-        
+
         # Parameters
         self.add_param('turbine_number', val=0.0) # = Int(iotype='in', desc='number of turbines in project')
         self.add_param('sea_depth', val=0.0) # = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
         self.add_param('year', val=2012) # = Int(2009, iotype='in', desc='year for project start')
         self.add_param('month', val=9) # = Int(12, iotype = 'in', desc= 'month for project start')
         self.add_param('multiplier', val=0.0) # = Float(1.0, iotype='in')
-    
+
         # Outputs
         self.add_output('bos_costs', val=0.0) #  = Float(iotype='out', desc='Overall wind plant balance of station/system costs up to point of comissioning')
         #self.add_output(bos_breakdown = VarTree(BOSVarTree(), iotype='out', desc='BOS cost breakdown')
@@ -49,7 +49,7 @@ class bos_csm_component(Component):
         self.hub_height = params['hub_height'] # = Float(iotype='in', units='m', desc='hub height')
         self.RNA_mass = params['RNA_mass'] # = Float(iotype='in', units='kg', desc='Rotor Nacelle Assembly mass')
         self.turbine_cost = params['turbine_cost'] # = Float(iotype='in', units='USD', desc='Single Turbine Capital _costs')
-        
+
         # Parameters
         self.turbine_number = params['turbine_number'] # = Int(iotype='in', desc='number of turbines in project')
         self.sea_depth = params['sea_depth'] # = Float(20.0, units = 'm', iotype = 'in', desc = 'sea depth for offshore wind plant')
@@ -251,7 +251,7 @@ class bos_csm_component(Component):
         self.bos_breakdown_assembly_and_installation_costs = installation_costs * self.turbine_number
         self.bos_breakdown_soft_costs = 0.0
         self.bos_breakdown_other_costs = (pai_costs + scour_costs + suretyBond) * self.turbine_number
-  
+
         # derivatives
         self.d_development_d_rating *= self.turbine_number
         self.d_preparation_d_rating *= self.turbine_number
@@ -358,7 +358,7 @@ def example():
     root.add('bos_csm_test', bos_csm_component(), promotes=['*'])
     prob = Problem(root)
     prob.setup()
-    
+
     prob['machine_rating'] = 5000.0
     prob['rotor_diameter'] = 126.0
     prob['turbine_cost'] = 5950209.28
