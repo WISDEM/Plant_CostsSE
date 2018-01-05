@@ -23,7 +23,7 @@ kwargs = {'author': '',
  'package_dir': {'': 'src'},
  'packages': ['plant_costsse'],
  'url': '',
- 'version': '0.1',
+ 'version': '0.1.1',
  'zip_safe': False}
 
 
