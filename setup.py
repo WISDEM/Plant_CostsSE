@@ -50,8 +50,8 @@ if USE_CYTHON:
 setup(
     name='NREL_Land_BOSSE',
     description='a translation of the NREL landbased balance of station excel model',
-    author='S. Andrew Ning',
-    author_email='andrew.ning@nrel.gov',
+    author='NREL WISDEM Team',
+    author_email='systems.engineering@nrel.gov',
     package_dir={'': 'src'},
     py_modules=['plant_costsse.nrel_land_bosse.nrel_land_bosse'],
     license='Apache License, Version 2.0',

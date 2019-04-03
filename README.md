@@ -1,41 +1,23 @@
+# Plant_CostsSE
+## WARNING- This repository is deprecated
+
 Plant_CostsSE is a set of models for analyzing wind plant balance of station and operational expenditures for both land-based and offshore wind plants. (See separate notes on the land-based balance of station model at the bottom of this page).
 
-Author: [K. Dykes](mailto:nrel.wisdem+plantcostsse@gmail.com)
+Author: [NREL WISDEM Team](mailto:systems.engineering@nrel.gov) 
 
-## Version
+## Documentation
 
-This software is a beta version 0.1.1.
-
-## Detailed Documentation
-
-For detailed documentation see <http://wisdem.github.io/Plant_CostsSE/>
-
-## Prerequisites
-
-General: NumPy, SciPy, Swig, pyWin32, MatlPlotLib, Lxml, OpenMDAO
-
-## Dependencies
-
-Wind Plant Framework: [FUSED-Wind](http://fusedwind.org) (Framework for Unified Systems Engineering and Design of Wind Plants)
-
-Sub-Models: CommonSE
-
-Supporting python packages: Pandas, Algopy, Zope.interface, Sphinx, Xlrd, PyOpt, py2exe, Pyzmq, Sphinxcontrib-bibtex, Sphinxcontrib-zopeext, Numpydoc, Ipython
+See local documentation in the `docs`-directory or access the online version at <http://wisdem.github.io/Plant_CostsSE/>
 
 ## Installation
 
-First, clone the [repository](https://github.com/WISDEM/Plant_CostsSE)
-or download the releases and uncompress/unpack (Plant_CostsSE.py-|release|.tar.gz or Plant_CostsSE.py-|release|.zip) from the website link at the bottom the [Plant_CostsSE site](http://nwtc.nrel.gov/Plant_CostsSE).
+For detailed installation instructions of WISDEM modules see <https://github.com/WISDEM/WISDEM> or to install Plant_CostsSE by itself do:
 
-Install PLant_CostsSE within an activated OpenMDAO environment:
-
-	$ plugin install
-
-It is not recommended to install the software outside of OpenMDAO.
+    $ python setup.py install
 
 ## Run Unit Tests
 
-To check if installation was successful try to import the module in an activated OpenMDAO environment:
+To check if installation was successful try to import the package:
 
 	$ python
 	> import plant_costsse.nrel_csm_bos.nrel_csm_bos
@@ -43,7 +25,6 @@ To check if installation was successful try to import the module in an activated
 	> import plant_costsse.ecn_opex_offshore.ecn_opex_offshore
 
 Note that you must have the ECN Offshore OPEX model and license in order to use the latter module.  This software contains only the OpenMDAO wrapper for the model.
-
 
 You may also run the unit tests which include functional and gradient tests.  Analytic gradients are provided for variables only so warnings will appear for missing gradients on model input parameters; these can be ignored.
 
